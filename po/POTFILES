@@ -1,0 +1,7 @@
+data/org.pos.manager.desktop.in
+data/org.pos.manager.appdata.xml.in
+data/org.pos.manager.gschema.xml
+src/posman-window.ui
+src/main.c
+src/posman-window.c
+
