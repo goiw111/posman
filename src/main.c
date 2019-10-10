@@ -68,7 +68,5 @@ main (int   argc,
 	 * method "run". But we need to cast, which is what the "G_APPLICATION()"
 	 * macro does.
 	 */
-	ret = g_application_run (G_APPLICATION (app), argc, argv);
-
-	return ret;
+	return g_application_run (G_APPLICATION (app), argc, argv);
 }
