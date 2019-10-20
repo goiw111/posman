@@ -1,6 +1,7 @@
 posman_sources = [
   'main.c',
   'posman-window.c',
+  'posman-panel-list.c',
 ]
 
 posman_deps = [

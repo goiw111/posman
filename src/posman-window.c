@@ -1,6 +1,7 @@
 
 #include "posman-config.h"
 #include "posman-window.h"
+#include "posman-panel-list.h"
 
 struct _PosmanWindow
 {
@@ -20,6 +21,8 @@ posman_window_class_init (PosmanWindowClass *klass)
 
   gtk_widget_class_set_template_from_resource (widget_class, "/org/pos/manager/posman-window.ui");
  /* gtk_widget_class_bind_template_child (widget_class, PosmanWindow, header_bar);*/
+
+  g_type_ensure(POSMAN_TYPE_PANEL_LIST);
 }
 
 static void
