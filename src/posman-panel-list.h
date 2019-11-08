@@ -13,6 +13,8 @@ typedef enum{
 
 G_DECLARE_FINAL_TYPE (PosmanPanelList, posman_panel_list, POSMAN, PANEL_LIST, GtkStack)
 
-PosmanPanelList *posman_panel_list_new (void);
+PosmanPanelList       *posman_panel_list_new (void);
+posmanpanellistview   posman_panel_list_get_view(PosmanPanelList *self);
+void                  postman_panel_list_set_view(PosmanPanelList *self,posmanpanellistview view);
 
 G_END_DECLS

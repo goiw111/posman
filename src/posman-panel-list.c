@@ -36,6 +36,12 @@ enum {
 /*
  * Auxiliary methods
  */
+posmanpanellistview
+posman_panel_list_get_view(PosmanPanelList *self)
+{
+  g_return_val_if_fail (POSMAN_IS_PANEL_LIST (self), -1);
+  return self->view;
+}
 
 static GtkWidget*
 get_listbox_from_view(PosmanPanelList     *self,
@@ -98,7 +104,7 @@ posman_panel_list_get_property (GObject    *object,
     }
 }
 
-static void
+void
 postman_panel_list_set_view(PosmanPanelList *self,
                             posmanpanellistview view)
 {
@@ -168,4 +174,6 @@ posman_panel_list_class_init (PosmanPanelListClass *klass)
 static void
 posman_panel_list_init (PosmanPanelList *self)
 {
+  gtk_widget_init_template (GTK_WIDGET (self));
+
 }
