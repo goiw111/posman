@@ -12,7 +12,9 @@ struct _PosmanPanelLoaderInterface
 {
   GTypeInterface parent;
 
-  void (*add_items) (PosmanPanelLoader *self);
+  gboolean (*get_cust) (PosmanPanelLoader *self);
 };
+
+gboolean posman_panel_loader_get_cust(PosmanPanelLoader *self);
 
 G_END_DECLS
