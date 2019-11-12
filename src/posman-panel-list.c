@@ -1,6 +1,7 @@
 #include "posman-panel-list.h"
 #include "posman-panel-model.h"
 #include "posman-panel-loader.h"
+#include <sqlite3.h>
 
 struct _PosmanPanelList
 {
@@ -14,12 +15,15 @@ struct _PosmanPanelList
 
   PosmanPanelModel          *cust_model;
 };
+
+
 typedef struct {
   GtkWidget                 *row;
 
   gchar                     *id;
   gchar                     *name;
 }RowMainData;
+
 
 typedef struct {
   GtkWidget                 *row;
@@ -245,6 +249,7 @@ posman_panel_list_class_init (PosmanPanelListClass *klass)
                     posman_panel_list_cust ,
                     posman_panel_list_main ,
                     G_PARAM_READWRITE );
+
   g_object_class_install_properties (object_class, N_PROPS, properties);
 
 }
@@ -253,9 +258,7 @@ static void
 posman_panel_list_init (PosmanPanelList *self)
 {
   gtk_widget_init_template (GTK_WIDGET (self));
-  self->cust_model = g_object_new (POSMAN_TYPE_PANEL_MODEL, "db-init",TRUE,NULL);
-  posman_panel_loader_get_cust(POSMAN_PANEL_LOADER (self->cust_model));
-  posman_panel_list_load_panels(self);
 
 
 }
+

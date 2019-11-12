@@ -13,6 +13,12 @@ enum
   N_COL
 };
 
+typedef enum
+{
+  posmanpanelmodelmain,
+  posmanpanelmodelcust
+}posmanpanelmodeltype;
+
 #define POSMAN_TYPE_PANEL_MODEL (posman_panel_model_get_type())
 
 G_DECLARE_FINAL_TYPE (PosmanPanelModel,

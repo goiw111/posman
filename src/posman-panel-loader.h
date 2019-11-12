@@ -1,6 +1,7 @@
 #pragma once
 
 #include <glib-object.h>
+#include <sqlite3.h>
 
 G_BEGIN_DECLS
 
@@ -12,9 +13,9 @@ struct _PosmanPanelLoaderInterface
 {
   GTypeInterface parent;
 
-  gboolean (*get_cust) (PosmanPanelLoader *self);
+  gboolean (*get_cust) (PosmanPanelLoader *self, sqlite3 *db);
 };
 
-gboolean posman_panel_loader_get_cust(PosmanPanelLoader *self);
+gboolean posman_panel_loader_get_cust(PosmanPanelLoader *self, sqlite3 *db);
 
 G_END_DECLS

@@ -2,6 +2,7 @@
 #include "posman-config.h"
 #include "posman-window.h"
 #include "posman-panel-list.h"
+#include <sqlite3.h>
 
 struct _PosmanWindow
 {
@@ -11,6 +12,11 @@ struct _PosmanWindow
   GtkWidget             *header_bar;
   GtkWidget             *previous_button;
   GtkWidget             *panel_list;
+
+  /* database */
+  sqlite3               *db;
+
+
 };
 
 G_DEFINE_TYPE (PosmanWindow, posman_window, GTK_TYPE_APPLICATION_WINDOW)
@@ -26,10 +32,21 @@ void panel_list_view_changed_cb (PosmanPanelList *panel_list,
   gtk_widget_set_visible (self->previous_button, !is_main_view);
 }
 
+static void posman_window_finalize(GObject *object)
+{
+  PosmanWindow *self = POSMAN_WINDOW (object);
+  sqlite3_close(self->db);
+
+  G_OBJECT_CLASS (posman_window_parent_class)->finalize (object);
+}
+
 static void
 posman_window_class_init (PosmanWindowClass *klass)
 {
-  GtkWidgetClass *widget_class = GTK_WIDGET_CLASS (klass);
+  GtkWidgetClass  *widget_class = GTK_WIDGET_CLASS (klass);
+  GObjectClass    *object_class = G_OBJECT_CLASS (klass);
+
+  object_class->finalize = posman_window_finalize;
 
   gtk_widget_class_set_template_from_resource (widget_class, "/org/pos/manager/posman-window.ui");
 
@@ -45,4 +62,20 @@ posman_window_init (PosmanWindow *self)
 {
   gtk_widget_init_template (GTK_WIDGET (self));
 
+}
+
+static int
+posman_window_db_init(PosmanWindow *self)
+{
+  g_autofree char *dir = NULL;
+
+  dir = g_strdup_printf("%s/""posman.db",g_get_user_data_dir());
+
+  int rc = sqlite3_open(dir, &(self->db));
+
+  if (rc != SQLITE_OK)
+    {
+      g_warning ("Cannot open database: %s\n", sqlite3_errmsg(self->db));
+      sqlite3_close (self->db);
+    }
 }

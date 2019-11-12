@@ -5,15 +5,10 @@ G_DEFINE_INTERFACE (PosmanPanelLoader, posman_panel_loader, G_TYPE_OBJECT)
 static void
 posman_panel_loader_default_init (PosmanPanelLoaderInterface *iface)
 {
-    g_object_interface_install_property (iface,
-                                         g_param_spec_boolean ("db-init",
-                                                               "database init",
-                                                               "open database file",
-                                                               TRUE,
-                                                               G_PARAM_READWRITE));
+
 }
 
-gboolean posman_panel_loader_get_cust(PosmanPanelLoader *self)
+gboolean posman_panel_loader_get_cust(PosmanPanelLoader *self, sqlite3 *db)
 {
   PosmanPanelLoaderInterface *iface = POSMAN_PANEL_LOADER_GET_IFACE (self);
 
@@ -29,6 +24,6 @@ gboolean posman_panel_loader_get_cust(PosmanPanelLoader *self)
     }
   else
     {
-      return iface->get_cust(self);
+      return iface->get_cust(self,db);
     }
 }
