@@ -129,7 +129,7 @@ posman_panel_model_class_init (PosmanPanelModelClass *klass)
                                            posmanpanelmodelmain,
                                            posmanpanelmodelcust,
                                            posmanpanelmodelmain,
-                                           G_PARAM_READWRITE | G_PARAM_CONSTRUCT/*_ONLY*/);
+                                           G_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY);
 
   g_object_class_install_properties (object_class, N_PROPS, properties);
 
