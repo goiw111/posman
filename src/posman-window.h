@@ -9,7 +9,5 @@ G_BEGIN_DECLS
 
 G_DECLARE_FINAL_TYPE (PosmanWindow, posman_window, POSMAN, WINDOW, GtkApplicationWindow)
 
-static int
-posman_window_db_init(PosmanWindow *self);
 
 G_END_DECLS

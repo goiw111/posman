@@ -5,7 +5,7 @@
 
 struct _PosmanPanelList
 {
-  GtkStack    parent_instance;
+  GtkStack                  parent_instance;
 
   GtkWidget                 *main_listbox;
   GtkWidget                 *cust_listbox;
@@ -127,33 +127,6 @@ posman_panel_list_add_panel(PosmanPanelList *self, const gchar *id, const gchar 
 
 }
 
-static void
-posman_panel_list_load_panels(PosmanPanelList *self)
-{
-  gboolean    valid;
-  GtkTreeIter iter;
-
-  g_assert(self->cust_model != NULL);
-
-  valid = gtk_tree_model_get_iter_first (GTK_TREE_MODEL (self->cust_model),
-                                         &iter);
-  while (valid)
-    {
-      g_autofree gchar *id = NULL;
-      g_autofree gchar *name = NULL;
-
-      gtk_tree_model_get (GTK_TREE_MODEL (self->cust_model), &iter,
-                          COL_ID,&id,
-                          COL_NAME,&name,
-                          -1);
-
-      posman_panel_list_add_panel (self, id, name);
-
-      valid = gtk_tree_model_iter_next (GTK_TREE_MODEL (self->cust_model),
-                                        &iter);
-    }
-}
-
 PosmanPanelList *
 posman_panel_list_new (void)
 {
@@ -187,7 +160,7 @@ posman_panel_list_get_property (GObject    *object,
 }
 
 void
-postman_panel_list_set_view(PosmanPanelList *self,
+posman_panel_list_set_view(PosmanPanelList *self,
                             posmanpanellistview view)
 {
   g_return_if_fail (POSMAN_IS_PANEL_LIST (self));
@@ -215,7 +188,7 @@ posman_panel_list_set_property (GObject      *object,
   switch (prop_id)
     {
       case PROP_VIEW:
-        postman_panel_list_set_view (self, g_value_get_int (value));
+        posman_panel_list_set_view (self, g_value_get_int (value));
         break;
 
     default:
@@ -231,9 +204,11 @@ posman_panel_list_class_init (PosmanPanelListClass *klass)
 
   gtk_widget_class_set_template_from_resource (widget_class,
                                                "/org/pos/manager/posman-panel-list.ui");
+
   gtk_widget_class_bind_template_child (widget_class,
                                         PosmanPanelList,
                                         main_listbox);
+
   gtk_widget_class_bind_template_child (widget_class,
                                         PosmanPanelList,
                                         cust_listbox);
@@ -244,7 +219,8 @@ posman_panel_list_class_init (PosmanPanelListClass *klass)
 
   properties[PROP_VIEW] =
   g_param_spec_int ("view",
-                    "view","the current view of the sidelist",
+                    "view",
+                    "the current view of the sidelist",
                     posman_panel_list_main ,
                     posman_panel_list_cust ,
                     posman_panel_list_main ,
@@ -258,7 +234,46 @@ static void
 posman_panel_list_init (PosmanPanelList *self)
 {
   gtk_widget_init_template (GTK_WIDGET (self));
-
-
 }
 
+void
+posman_panel_list_main_model_init(PosmanPanelList *self, sqlite3 *db)
+{
+  PosmanPanelModel *model;
+
+  model = g_object_new (POSMAN_TYPE_PANEL_MODEL,
+                        NULL);
+
+  posman_panel_model_main_init(model);
+
+  posman_panel_loader_get_cust(POSMAN_PANEL_LOADER (model),db);
+
+  self->cust_model = model;
+}
+
+void
+posman_panel_list_load_panels(PosmanPanelList *self)
+{
+  gboolean    valid;
+  GtkTreeIter iter;
+
+  g_assert(self->cust_model != NULL);
+
+  valid = gtk_tree_model_get_iter_first (GTK_TREE_MODEL (self->cust_model),
+                                         &iter);
+  while (valid)
+    {
+      g_autofree gchar *id = NULL;
+      g_autofree gchar *name = NULL;
+
+      gtk_tree_model_get (GTK_TREE_MODEL (self->cust_model), &iter,
+                          COL_ID,&id,
+                          COL_NAME,&name,
+                          -1);
+
+      posman_panel_list_add_panel (self, id, name);
+
+      valid = gtk_tree_model_iter_next (GTK_TREE_MODEL (self->cust_model),
+                                        &iter);
+    }
+}

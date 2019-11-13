@@ -18,9 +18,14 @@ G_DECLARE_FINAL_TYPE (PosmanPanelList,
                       GtkStack)
 
 PosmanPanelList       *posman_panel_list_new (void);
+
 void                  posman_panel_list_main_model_init(PosmanPanelList *self,
-                                       sqlite3 *db);
+                                                        sqlite3 *db);
+
+void                  posman_panel_list_load_panels(PosmanPanelList *self);
+
 posmanpanellistview   posman_panel_list_get_view(PosmanPanelList *self);
+
 void                  postman_panel_list_set_view(PosmanPanelList *self,
                                                   posmanpanellistview view);
 

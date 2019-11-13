@@ -24,8 +24,6 @@ on_activate (GtkApplication *app)
 		                       "default-height", 300,
 		                       NULL);
 
-  posman_window_db_init(POSMAN_WINDOW (window));
-
 	/* Ask the window manager/compositor to present the window. */
 	gtk_window_present (window);
 }
@@ -35,7 +33,6 @@ main (int   argc,
       char *argv[])
 {
 	g_autoptr(GtkApplication) app = NULL;
-	int ret;
 
 	/* Set up gettext translations */
 	bindtextdomain (GETTEXT_PACKAGE, LOCALEDIR);

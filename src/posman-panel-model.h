@@ -28,4 +28,10 @@ G_DECLARE_FINAL_TYPE (PosmanPanelModel,
 
 PosmanPanelModel *posman_panel_model_new (void);
 
+void
+posman_panel_model_add_cust(PosmanPanelModel *self, const unsigned char *id, const unsigned char *name);
+
+void
+posman_panel_model_main_init(PosmanPanelModel *self);
+
 G_END_DECLS
