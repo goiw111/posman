@@ -20,7 +20,6 @@ G_DEFINE_TYPE_WITH_CODE (PosmanPanelModel,
                          GTK_TYPE_LIST_STORE,
                          G_IMPLEMENT_INTERFACE (POSMAN_TYPE_PANEL_LOADER,
                                                 posman_panel_loader_init))
-
 enum {
   PROP_0,
   PROP_TYPE,
@@ -28,6 +27,9 @@ enum {
 };
 
 static GParamSpec *properties [N_PROPS];
+
+static void
+posman_panel_model_main_init(PosmanPanelModel *self);
 
 
 PosmanPanelModel *
@@ -54,8 +56,8 @@ static gboolean posman_panel_model_get_cust(PosmanPanelLoader *self, sqlite3  *d
 
   while(sqlite3_step(stmt) != SQLITE_DONE)
     posman_panel_model_add_cust (model,
-                                 sqlite3_column_text (stmt, COL_ID),
-                                 sqlite3_column_text (stmt, COL_NAME));
+                                 sqlite3_column_text (stmt, COL_MAIN_ID),
+                                 sqlite3_column_text (stmt, COL_MAIN_NAME));
 
   sqlite3_finalize(stmt);
   return TRUE;
@@ -114,6 +116,15 @@ posman_panel_model_set_property (GObject      *object,
     }
 }
 
+
+static void
+posman_panel_model_constructes(GObject *object)
+{
+  PosmanPanelModel *self = POSMAN_PANEL_MODEL (object);
+  if(self->type == posmanpanelmodelmain)
+  posman_panel_model_main_init(self);
+}
+
 static void
 posman_panel_model_class_init (PosmanPanelModelClass *klass)
 {
@@ -122,6 +133,7 @@ posman_panel_model_class_init (PosmanPanelModelClass *klass)
   object_class->finalize = posman_panel_model_finalize;
   object_class->get_property = posman_panel_model_get_property;
   object_class->set_property = posman_panel_model_set_property;
+  object_class->constructed  = posman_panel_model_constructes;
 
   properties[PROP_TYPE] = g_param_spec_int("type",
                                            "type",
@@ -141,27 +153,60 @@ posman_panel_model_init (PosmanPanelModel *self)
 
 }
 
-void
+static void
 posman_panel_model_main_init(PosmanPanelModel *self)
 {
   g_return_if_fail (self->type == posmanpanelmodelmain);
 
   GType types[] = {G_TYPE_STRING,G_TYPE_STRING};
-  gtk_list_store_set_column_types(GTK_LIST_STORE (self),N_COL,types);
+  gtk_list_store_set_column_types(GTK_LIST_STORE (self),N_MAIN_COL,types);
+}
+
+static void
+posman_panel_model_cust_init(PosmanPanelModel *self)
+{
+  g_return_if_fail (self->type == posmanpanelmodelcust);
+
+  GType types[] = {G_TYPE_STRING,G_TYPE_STRING,G_TYPE_STRING,G_TYPE_STRING};
+  gtk_list_store_set_column_types(GTK_LIST_STORE (self),N_CUST_COL,types);
+
 }
 
 void
-posman_panel_model_add_cust(PosmanPanelModel *self, const unsigned char *id, const unsigned char *name)
+posman_panel_model_add_cust(PosmanPanelModel *self,
+                            const unsigned char *id,
+                            const unsigned char *name)
 {
   g_return_if_fail (self->type == posmanpanelmodelmain);
 
   gtk_list_store_insert_with_values(GTK_LIST_STORE (self),NULL,0,
-                                    COL_ID,
+                                    COL_MAIN_ID,
                                     id,
-                                    COL_NAME,
+                                    COL_MAIN_NAME,
                                     name,
                                     -1);
 
+}
+
+void
+posman_panel_model_add_cmnd(PosmanPanelModel *self,
+                            const unsigned char *id,
+                            const unsigned char *state,
+                            const unsigned char *date,
+                            const unsigned char *total)
+{
+  g_return_if_fail (self->type == posmanpanelmodelcust);
+
+  gtk_list_store_insert_with_values(GTK_LIST_STORE (self),NULL,0,
+                                    COL_CUST_ID,
+                                    id,
+                                    COL_CUST_STATE,
+                                    state,
+                                    COL_CUST_DATE,
+                                    date,
+                                    COL_CUST_TOTAL,
+                                    total,
+                                    -1);
 }
 
 

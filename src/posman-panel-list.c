@@ -159,7 +159,7 @@ posman_panel_list_get_property (GObject    *object,
     }
 }
 
-void
+static void
 posman_panel_list_set_view(PosmanPanelList *self,
                             posmanpanellistview view)
 {
@@ -224,7 +224,7 @@ posman_panel_list_class_init (PosmanPanelListClass *klass)
                     posman_panel_list_main ,
                     posman_panel_list_cust ,
                     posman_panel_list_main ,
-                    G_PARAM_READWRITE );
+                    G_PARAM_READWRITE | G_PARAM_CONSTRUCT);
 
   g_object_class_install_properties (object_class, N_PROPS, properties);
 
@@ -244,15 +244,13 @@ posman_panel_list_main_model_init(PosmanPanelList *self, sqlite3 *db)
   model = g_object_new (POSMAN_TYPE_PANEL_MODEL,
                         NULL);
 
-  posman_panel_model_main_init(model);
-
   posman_panel_loader_get_cust(POSMAN_PANEL_LOADER (model),db);
 
   self->cust_model = model;
 }
 
 void
-posman_panel_list_load_panels(PosmanPanelList *self)
+posman_panel_list_main_load_panels(PosmanPanelList *self)
 {
   gboolean    valid;
   GtkTreeIter iter;

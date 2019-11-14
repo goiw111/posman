@@ -7,11 +7,21 @@ G_BEGIN_DECLS
 
 enum
 {
-  COL_ID,
-  COL_NAME,
+  COL_MAIN_ID,
+  COL_MAIN_NAME,
 
-  N_COL
+  N_MAIN_COL
 };
+
+enum
+{
+  COL_CUST_ID,
+  COL_CUST_STATE,
+  COL_CUST_DATE,
+  COL_CUST_TOTAL
+
+  N_CUST_COL
+}
 
 typedef enum
 {
@@ -26,12 +36,13 @@ G_DECLARE_FINAL_TYPE (PosmanPanelModel,
                       POSMAN, PANEL_MODEL,
                       GtkListStore)
 
+
+
 PosmanPanelModel *posman_panel_model_new (void);
 
 void
 posman_panel_model_add_cust(PosmanPanelModel *self, const unsigned char *id, const unsigned char *name);
 
-void
-posman_panel_model_main_init(PosmanPanelModel *self);
+
 
 G_END_DECLS

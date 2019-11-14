@@ -81,7 +81,7 @@ posman_window_init (PosmanWindow *self)
   posman_window_init_database(self);
 
   posman_panel_list_main_model_init(POSMAN_PANEL_LIST (self->panel_list),self->db);
-  posman_panel_list_load_panels(POSMAN_PANEL_LIST (self->panel_list));
+  posman_panel_list_main_load_panels(POSMAN_PANEL_LIST (self->panel_list));
 
 }
 
