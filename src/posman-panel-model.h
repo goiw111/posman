@@ -18,10 +18,10 @@ enum
   COL_CUST_ID,
   COL_CUST_STATE,
   COL_CUST_DATE,
-  COL_CUST_TOTAL
+  COL_CUST_TOTAL,
 
   N_CUST_COL
-}
+};
 
 typedef enum
 {
@@ -41,8 +41,15 @@ G_DECLARE_FINAL_TYPE (PosmanPanelModel,
 PosmanPanelModel *posman_panel_model_new (void);
 
 void
-posman_panel_model_add_cust(PosmanPanelModel *self, const unsigned char *id, const unsigned char *name);
+posman_panel_model_add_cust(PosmanPanelModel *self,
+                            const unsigned char *id,
+                            const unsigned char *name);
 
-
+void
+posman_panel_model_add_cmnd(PosmanPanelModel *self,
+                            const unsigned char *id,
+                            const unsigned char *state,
+                            const unsigned char *date,
+                            const unsigned char *total);
 
 G_END_DECLS

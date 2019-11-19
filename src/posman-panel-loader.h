@@ -14,8 +14,11 @@ struct _PosmanPanelLoaderInterface
   GTypeInterface parent;
 
   gboolean (*get_cust) (PosmanPanelLoader *self, sqlite3 *db);
+  gboolean (*get_cmnd) (PosmanPanelLoader *self, sqlite3 *db, gchar *cust_id);
 };
 
 gboolean posman_panel_loader_get_cust(PosmanPanelLoader *self, sqlite3 *db);
+gboolean posman_panel_loader_get_cmnd(PosmanPanelLoader *self, sqlite3 *db,
+                                      gchar *cust_id);
 
 G_END_DECLS

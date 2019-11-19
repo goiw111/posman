@@ -76,6 +76,7 @@ posman_window_class_init (PosmanWindowClass *klass)
 static void
 posman_window_init (PosmanWindow *self)
 {
+  GtkWidget *panel;
   gtk_widget_init_template (GTK_WIDGET (self));
 
   posman_window_init_database(self);

@@ -30,6 +30,8 @@ static GParamSpec *properties [N_PROPS];
 
 static void
 posman_panel_model_main_init(PosmanPanelModel *self);
+static void
+posman_panel_model_cust_init(PosmanPanelModel *self);
 
 
 PosmanPanelModel *
@@ -64,9 +66,42 @@ static gboolean posman_panel_model_get_cust(PosmanPanelLoader *self, sqlite3  *d
 
 }
 
+static gboolean posman_panel_model_get_cmnd (PosmanPanelLoader *self,
+                                             sqlite3 *db,
+                                             gchar *cust_id)
+{
+  PosmanPanelModel    *model = POSMAN_PANEL_MODEL (self);
+  sqlite3_stmt        *stmt;
+  int                 rc;
+  g_autofree gchar    *sql = NULL;
+
+  sql = g_strdup_printf("select id,status,order_date from orders where cust_id = %s;",cust_id);
+
+  rc = sqlite3_prepare_v2(db,sql,-1,
+                          &stmt,
+                          NULL);
+
+  if (rc != SQLITE_OK)
+    {
+      g_warning ("Failed to execute statement: %s\n", sqlite3_errmsg(db));
+      return FALSE;
+    }
+
+  while(sqlite3_step(stmt) != SQLITE_DONE)
+    posman_panel_model_add_cmnd (model,
+                                 sqlite3_column_text (stmt, COL_CUST_ID),
+                                 sqlite3_column_text (stmt, COL_CUST_STATE),
+                                 sqlite3_column_text (stmt, COL_CUST_DATE),
+                                 (const unsigned char*)"NULL");
+
+  sqlite3_finalize(stmt);
+  return TRUE;
+}
+
 void posman_panel_loader_init (PosmanPanelLoaderInterface *iface)
 {
   iface->get_cust = posman_panel_model_get_cust;
+  iface->get_cmnd = posman_panel_model_get_cmnd;
 }
 
 static void
@@ -121,8 +156,14 @@ static void
 posman_panel_model_constructes(GObject *object)
 {
   PosmanPanelModel *self = POSMAN_PANEL_MODEL (object);
+
   if(self->type == posmanpanelmodelmain)
-  posman_panel_model_main_init(self);
+    posman_panel_model_main_init(self);
+
+  if(self->type == posmanpanelmodelcust)
+    posman_panel_model_cust_init(self);
+
+  G_OBJECT_CLASS (posman_panel_model_parent_class)->constructed(object);
 }
 
 static void
@@ -177,6 +218,7 @@ posman_panel_model_add_cust(PosmanPanelModel *self,
                             const unsigned char *id,
                             const unsigned char *name)
 {
+  g_return_if_fail (POSMAN_IS_PANEL_MODEL (self));
   g_return_if_fail (self->type == posmanpanelmodelmain);
 
   gtk_list_store_insert_with_values(GTK_LIST_STORE (self),NULL,0,
@@ -195,6 +237,7 @@ posman_panel_model_add_cmnd(PosmanPanelModel *self,
                             const unsigned char *date,
                             const unsigned char *total)
 {
+  g_return_if_fail (POSMAN_IS_PANEL_MODEL (self));
   g_return_if_fail (self->type == posmanpanelmodelcust);
 
   gtk_list_store_insert_with_values(GTK_LIST_STORE (self),NULL,0,
