@@ -8,10 +8,11 @@ struct _PosmanPanelList
   GtkStack                  parent_instance;
 
   GtkWidget                 *main_listbox;
+
   GtkWidget                 *cust_listbox;
+  gchar                     *cust_id;
 
   posmanpanellistview       view;
-  gint                      cust_id;
 
   PosmanPanelModel          *cust_model;
   PosmanPanelModel          *cmnd_model;
@@ -50,10 +51,6 @@ enum {
 };
 
 static GParamSpec *properties [N_PROPS] = { NULL, };
-
-static void
-posman_panel_list_set_view(PosmanPanelList *self,
-                            posmanpanellistview view);
 
 /*
  * RowData functions
@@ -205,12 +202,38 @@ posman_panel_list_add_cmnd(PosmanPanelList *self,
 
 
 /*callback*/
+
+static void
+posman_panel_list_cust_listbox_remove_all(GtkListBox   *box)
+{
+  GList   *iter;
+
+  iter = gtk_container_get_children(GTK_CONTAINER (box));
+  while (iter != NULL)
+    {
+      gtk_container_remove(GTK_CONTAINER (box),GTK_WIDGET(iter->data));
+      iter = g_list_next(iter);
+    }
+  g_list_free(iter);
+
+}
+
 static void
 main_row_activated_cb(GtkListBox      *box,
                       GtkListBoxRow   *row,
                       PosmanPanelList *self)
 {
   RowMainData *data = g_object_get_data(G_OBJECT(row),"data");
+
+  if(!g_strcmp0(data->id,self->cust_id))
+    {
+      posman_panel_list_set_view(self,posman_panel_list_cust);
+      return;
+    }
+
+  self->cust_id = data->id;
+  posman_panel_list_cust_listbox_remove_all(GTK_LIST_BOX (self->cust_listbox));
+
   posman_panel_list_cust_model_init(self,self->db,data->id);
   posman_panel_list_cust_load_panels(POSMAN_PANEL_LIST (self));
   posman_panel_list_set_view(self,posman_panel_list_cust);
@@ -269,7 +292,7 @@ posman_panel_list_get_property (GObject    *object,
     }
 }
 
-static void
+void
 posman_panel_list_set_view(PosmanPanelList *self,
                             posmanpanellistview view)
 {

@@ -54,7 +54,8 @@ static void
 previous_button_clicked_cb(GtkButton *button,
                            PosmanWindow    *self)
 {
-
+  posman_panel_list_set_view (POSMAN_PANEL_LIST (self->panel_list),
+                              posman_panel_list_main);
 }
 
 /* object vfonc */
