@@ -4,6 +4,7 @@ posman_sources = [
   'posman-panel-list.c',
   'posman-panel-model.c',
   'posman-panel-loader.c',
+  'posman-action-menu.c',
 ]
 
 sqlite_required = '3.27.2'

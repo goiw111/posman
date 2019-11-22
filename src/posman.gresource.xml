@@ -3,5 +3,6 @@
   <gresource prefix="/org/pos/manager">
     <file>posman-window.ui</file>
     <file>posman-panel-list.ui</file>
+    <file>posman-action-menu.ui</file>
   </gresource>
 </gresources>

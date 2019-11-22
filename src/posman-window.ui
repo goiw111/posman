@@ -157,6 +157,27 @@
                 <property name="position">2</property>
               </packing>
             </child>
+            <child>
+              <object class="PosmanActionMenu" id="action_menu">
+                <property name="visible">True</property>
+                <property name="can_focus">True</property>
+                <child>
+                  <object class="GtkImage">
+                    <property name="visible">True</property>
+                    <property name="can_focus">False</property>
+                    <property name="icon_name">open-menu-symbolic</property>
+                  </object>
+                </child>
+                <style>
+                  <class name="image-button"/>
+                </style>
+              </object>
+              <packing>
+                <property name="pack_type">end</property>
+                <property name="position">3</property>
+              </packing>
+            </child>
+
           </object>
           <packing>
             <property name="expand">False</property>
@@ -199,3 +220,4 @@
     </widgets>
   </object>
 </interface>
+

@@ -2,6 +2,7 @@
 #include "posman-config.h"
 #include "posman-window.h"
 #include "posman-panel-list.h"
+#include "posman-action-menu.h"
 #include <sqlite3.h>
 
 struct _PosmanWindow
@@ -84,6 +85,7 @@ posman_window_class_init (PosmanWindowClass *klass)
   gtk_widget_class_bind_template_callback (widget_class, previous_button_clicked_cb);
 
   g_type_ensure(POSMAN_TYPE_PANEL_LIST);
+  g_type_ensure(POSMAN_TYPE_ACTION_MENU);
 }
 
 static void
