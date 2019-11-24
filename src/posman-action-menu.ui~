@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- Generated with glade 3.22.0 -->
+<!-- Generated with glade 3.22.1 -->
 <interface>
   <requires lib="gtk+" version="3.22"/>
   <object class="GtkPopoverMenu" id="action_popover">
@@ -9,13 +9,13 @@
         <property name="visible">True</property>
         <property name="can_focus">False</property>
         <property name="orientation">vertical</property>
-        <property name="margin">10</property>
         <child>
           <object class="GtkModelButton" id="add_">
+            <property name="name">add_symbol</property>
             <property name="visible">True</property>
             <property name="can_focus">True</property>
-            <property name="image">add_symbol</property>
-            <property name="action-name">menu.add</property>
+            <property name="receives_default">False</property>
+            <property name="centered">True</property>
           </object>
           <packing>
             <property name="expand">False</property>
@@ -27,9 +27,8 @@
           <object class="GtkModelButton" id="remove_">
             <property name="visible">True</property>
             <property name="can_focus">True</property>
-            <property name="image">remove_symbol</property>
-
-            <property name="action-name">menu.remove</property>
+            <property name="receives_default">False</property>
+            <property name="centered">True</property>
           </object>
           <packing>
             <property name="expand">False</property>
@@ -61,7 +60,6 @@
         <property name="visible">True</property>
         <property name="can_focus">False</property>
         <property name="icon_name">list-add-symbolic</property>
-        <property name="margin">4</property>
       </object>
       <packing>
         <property name="expand">True</property>
@@ -70,7 +68,7 @@
       </packing>
     </child>
     <child>
-      <object class="GtkLabel" id="label2">
+      <object class="GtkLabel">
         <property name="visible">True</property>
         <property name="can_focus">False</property>
         <property name="label" translatable="yes">add</property>
@@ -85,12 +83,12 @@
   <object class="GtkBox" id="remove_symbol">
     <property name="visible">True</property>
     <property name="can_focus">False</property>
+    <property name="homogeneous">True</property>
     <child>
       <object class="GtkImage">
         <property name="visible">True</property>
         <property name="can_focus">False</property>
         <property name="icon_name">user-trash-symbolic</property>
-        <property name="margin">4</property>
       </object>
       <packing>
         <property name="expand">True</property>
@@ -99,7 +97,7 @@
       </packing>
     </child>
     <child>
-      <object class="GtkLabel" id="label1">
+      <object class="GtkLabel">
         <property name="visible">True</property>
         <property name="can_focus">False</property>
         <property name="label" translatable="yes">remove</property>
@@ -110,11 +108,5 @@
         <property name="position">1</property>
       </packing>
     </child>
-  </object>
-  <object class="GtkSizeGroup">
-    <widgets>
-      <widget name="label1"/>
-      <widget name="label2"/>
-    </widgets>
   </object>
 </interface>

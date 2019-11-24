@@ -4,4 +4,9 @@ data/org.pos.manager.gschema.xml
 src/posman-window.ui
 src/main.c
 src/posman-window.c
-
+src/posman-panel-model.c
+src/posman-panel-loader.c
+src/posman-panel-list.c
+src/posman-panel-list.ui
+src/posman-action-menu.c
+src/posman-action-menu.ui

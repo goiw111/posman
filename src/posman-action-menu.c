@@ -71,8 +71,39 @@ posman_action_menu_class_init (PosmanActionMenuClass *klass)
   gtk_widget_class_set_template_from_resource (widget_class, "/org/pos/manager/posman-action-menu.ui");
 }
 
+/* entries activate */
+
+static void
+posman_action_menu_add_activate(GSimpleAction *simple,
+                                GVariant      *parameter,
+                                gpointer       user_data)
+{
+  g_print("add\n");
+}
+
+static void
+posman_action_menu_remove_activate(GSimpleAction *simple,
+                                GVariant      *parameter,
+                                gpointer       user_data)
+{
+  g_print("remove\n");
+}
+
+
 static void
 posman_action_menu_init (PosmanActionMenu *self)
 {
+  GActionGroup *actions;
+  static const GActionEntry
+  entries[] = {
+    { "add", posman_action_menu_add_activate, NULL, NULL, NULL },
+    { "remove", posman_action_menu_remove_activate, NULL, NULL, NULL }
+  };
+
   gtk_widget_init_template (GTK_WIDGET (self));
+  actions = (GActionGroup*)g_simple_action_group_new ();
+  g_action_map_add_action_entries (G_ACTION_MAP (actions),
+                                       entries, 2,
+                                       self);
+  gtk_widget_insert_action_group (GTK_WIDGET (self), "menu", actions);
 }
