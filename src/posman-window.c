@@ -96,10 +96,6 @@ posman_window_init (PosmanWindow *self)
   GtkWidget *panel;
   gtk_widget_init_template (GTK_WIDGET (self));
 
-  posman_window_init_database(self);
-
-  posman_panel_list_main_model_init(POSMAN_PANEL_LIST (self->panel_list),self->db);
-  posman_panel_list_main_load_panels(POSMAN_PANEL_LIST (self->panel_list));
 
 }
 
