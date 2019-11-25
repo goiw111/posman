@@ -13,6 +13,7 @@ struct _PosmanWindow
   GtkWidget             *header_bar;
   GtkWidget             *previous_button;
   GtkWidget             *panel_list;
+  GtkWidget             *action_menu;
 
   /* database */
   sqlite3               *db;
@@ -81,6 +82,7 @@ posman_window_class_init (PosmanWindowClass *klass)
 
   gtk_widget_class_bind_template_child (widget_class, PosmanWindow, previous_button);
   gtk_widget_class_bind_template_child (widget_class, PosmanWindow, panel_list);
+  gtk_widget_class_bind_template_child (widget_class, PosmanWindow, action_menu);
   gtk_widget_class_bind_template_callback (widget_class, panel_list_view_changed_cb);
   gtk_widget_class_bind_template_callback (widget_class, previous_button_clicked_cb);
 
