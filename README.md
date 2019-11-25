@@ -1,2 +1,2 @@
 # posman
-pos manager
+pos manager with gtkliststor
