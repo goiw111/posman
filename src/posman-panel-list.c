@@ -54,13 +54,20 @@ get_listbox_from_view(PosmanPanelList     *self,
 /*callback*/
 
 static void
-cust_row_activated_cb(GtkListBox      *box,
+cmnd_row_activated_cb(GtkListBox      *box,
                       GtkListBoxRow   *row,
                       PosmanPanelList *self)
 {
 
 }
 
+static void
+cust_row_activated_cb(GtkListBox      *box,
+                      GtkListBoxRow   *row,
+                      PosmanPanelList *self)
+{
+
+}
 /*object*/
 
 PosmanPanelList *
@@ -136,24 +143,6 @@ posman_panel_list_set_property (GObject      *object,
 }
 
 static void
-posman_panel_list_constructed(GObject *object)
-{
-  PosmanPanelList *self = (PosmanPanelList *)object;
-
-  gtk_list_box_bind_model(GTK_LIST_BOX (self->cust_listbox),
-                          G_LIST_MODEL (self->list_stor_cust),
-                          row_cust_data_create,
-                          NULL,NULL);
-
-  gtk_list_box_bind_model(GTK_LIST_BOX (self->cmnd_listbox),
-                          G_LIST_MODEL (self->list_stor_cmnd),
-                          row_cmnd_data_create,
-                          NULL,NULL);
-
-  G_OBJECT_CLASS (posman_panel_list_parent_class)->constructed(object);
-}
-
-static void
 posman_panel_list_class_init (PosmanPanelListClass *klass)
 {
   GObjectClass    *object_class = G_OBJECT_CLASS (klass);
@@ -170,13 +159,14 @@ posman_panel_list_class_init (PosmanPanelListClass *klass)
                                         cmnd_listbox);
 
   gtk_widget_class_bind_template_callback (widget_class,
+                                           cmnd_row_activated_cb);
+  gtk_widget_class_bind_template_callback (widget_class,
                                            cust_row_activated_cb);
 
   object_class->finalize = posman_panel_list_finalize;
   object_class->dispose  = posman_panel_list_dispose;
   object_class->get_property = posman_panel_list_get_property;
   object_class->set_property = posman_panel_list_set_property;
-  object_class->constructed  = posman_panel_list_constructed;
 
   properties[PROP_VIEW] =
   g_param_spec_int ("view",
@@ -191,16 +181,14 @@ posman_panel_list_class_init (PosmanPanelListClass *klass)
   g_param_spec_object("list-stor-cust",
                       "list-stor-cust",
                       "GListStor proprety for customers",
-                      G_TYPE_LIST_STORE,
+                      G_TYPE_LIST_MODEL,
                       G_PARAM_READWRITE | G_PARAM_EXPLICIT_NOTIFY);
-
-  g_object_class_install_properties (object_class, N_PROPS, properties);
 
   properties[PROP_STOR_CMND] =
   g_param_spec_object("list-stor-cmnd",
                       "list-stor-cmnd",
                       "GListStor proprety for commend",
-                      G_TYPE_LIST_STORE,
+                      G_TYPE_LIST_MODEL,
                       G_PARAM_READWRITE | G_PARAM_EXPLICIT_NOTIFY);
 
   g_object_class_install_properties (object_class, N_PROPS, properties);
@@ -242,6 +230,7 @@ void
 posman_panel_list_set_model_cust(PosmanPanelList *self,
                                  GObject         *list_stor)
 {
+  g_print("cust\n");
   g_return_if_fail (POSMAN_IS_PANEL_LIST (self));
   g_return_if_fail (list_stor == NULL || G_IS_OBJECT (list_stor));
 
@@ -250,6 +239,12 @@ posman_panel_list_set_model_cust(PosmanPanelList *self,
 
   self->list_stor_cust = list_stor;
 
+  if (self->list_stor_cust)
+      gtk_list_box_bind_model(GTK_LIST_BOX (self->cust_listbox),
+                              G_LIST_MODEL (self->list_stor_cust),
+                              row_cust_data_create,
+                              NULL,NULL);
+
   g_object_notify_by_pspec (G_OBJECT (self), properties[PROP_STOR_CUST]);
 }
 
@@ -257,6 +252,7 @@ void
 posman_panel_list_set_model_cmnd(PosmanPanelList *self,
                                  GObject         *list_stor)
 {
+  g_print("cmnd\n");
   g_return_if_fail (POSMAN_IS_PANEL_LIST (self));
   g_return_if_fail (list_stor == NULL || G_IS_OBJECT (list_stor));
 
@@ -264,6 +260,13 @@ posman_panel_list_set_model_cmnd(PosmanPanelList *self,
     g_object_unref(self->list_stor_cmnd);
 
   self->list_stor_cmnd = list_stor;
+
+  if (self->list_stor_cmnd)
+      gtk_list_box_bind_model(GTK_LIST_BOX (self->cmnd_listbox),
+                              G_LIST_MODEL (self->list_stor_cmnd),
+                              row_cmnd_data_create,
+                              NULL,NULL);
+
 
   g_object_notify_by_pspec (G_OBJECT (self), properties[PROP_STOR_CMND]);
 }

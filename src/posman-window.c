@@ -59,12 +59,13 @@ posman_window_init_database(PosmanWindow *self)
     }
 }
 
-static gpointer *
+static GPtrArray *
 get_custs(PosmanWindow *self)
 {
   sqlite3_stmt *stmt;
   int          rc;
   int          i;
+  GPtrArray    *array;
 
   rc = sqlite3_prepare_v2(self->db,"SELECT id, full_name FROM customer;",-1,
                           &stmt,NULL);
@@ -73,28 +74,29 @@ get_custs(PosmanWindow *self)
       g_warning ("Failed to execute statement: %s\n", sqlite3_errmsg(self->db));
       return NULL;
     }
-  i = sqlite3_data_count(stmt);
-  gpointer rows[i];
 
-  int count = 0;
+  array = g_ptr_array_new_full (0, g_object_unref);
+
   while(sqlite3_step(stmt) != SQLITE_DONE)
     {
-    rows[count] = row_cust_data_new (sqlite3_column_text (stmt, COL_CUST_ID),
-                                     sqlite3_column_text (stmt, COL_CUST_NAME));
-    count++;
+      g_ptr_array_add (array,
+                       row_cust_data_new (sqlite3_column_text (stmt, COL_CUST_ID),
+                                          sqlite3_column_text (stmt, COL_CUST_NAME)));
     }
 
+  g_print("");
   sqlite3_finalize(stmt);
-  return rows[i];
+  return array;
 }
 
-static gpointer *
+static GPtrArray *
 get_cmnds(PosmanWindow *self,
           gchar        *cust_id)
 {
   sqlite3_stmt *stmt;
   int          rc;
   int          i;
+  GPtrArray    *array;
   g_autofree gchar    *sql = NULL;
 
 
@@ -106,21 +108,18 @@ get_cmnds(PosmanWindow *self,
       g_warning ("Failed to execute statement: %s\n", sqlite3_errmsg(self->db));
       return NULL;
     }
-  i = sqlite3_data_count(stmt);
-  gpointer rows[i];
+  array = g_ptr_array_new_full (0, g_object_unref);
 
-  int count = 0;
   while(sqlite3_step(stmt) != SQLITE_DONE)
-    {
-    rows[count] = row_cmnd_data_new (sqlite3_column_text (stmt, COL_CMND_ID),
-                                     sqlite3_column_text (stmt, COL_CMND_STATE),
-                                     sqlite3_column_text (stmt, COL_CMND_DATE),
-                                     (const char*)"NULL");
-    count++;
-    }
+    g_ptr_array_add (array,
+                     row_cmnd_data_new (sqlite3_column_text (stmt, COL_CMND_ID),
+                                        sqlite3_column_text (stmt, COL_CMND_STATE),
+                                        sqlite3_column_text (stmt, COL_CMND_DATE),
+                                        (const char*)"NULL"));
+
 
   sqlite3_finalize(stmt);
-  return rows[i];
+  return array;
 }
 /* callback */
 
@@ -156,11 +155,12 @@ static void posman_window_finalize(GObject *object)
 static void posman_window_constructed(GObject *object)
 {
   PosmanWindow *self = POSMAN_WINDOW (object);
-  gpointer     *rows= get_custs (self);
+  GPtrArray    *rows = get_custs (self);
 
   g_list_store_splice(G_LIST_STORE (self->list_stor_cust),
-                      0,0,rows,
-                      G_N_ELEMENTS(rows));
+                      0,0,rows->pdata,
+                      rows->len);
+  posman_panel_list_set_model_cust(POSMAN_PANEL_LIST (self->panel_list),self->list_stor_cust);
 
   G_OBJECT_CLASS (posman_window_parent_class)->constructed (object);
 }
@@ -179,8 +179,6 @@ posman_window_class_init (PosmanWindowClass *klass)
   gtk_widget_class_bind_template_child (widget_class, PosmanWindow, previous_button);
   gtk_widget_class_bind_template_child (widget_class, PosmanWindow, panel_list);
   gtk_widget_class_bind_template_child (widget_class, PosmanWindow, action_menu);
-  gtk_widget_class_bind_template_child (widget_class, PosmanWindow, list_stor_cust);
-  gtk_widget_class_bind_template_child (widget_class, PosmanWindow, list_stor_cmnd);
   gtk_widget_class_bind_template_callback (widget_class, panel_list_view_changed_cb);
   gtk_widget_class_bind_template_callback (widget_class, previous_button_clicked_cb);
 
@@ -191,6 +189,8 @@ posman_window_class_init (PosmanWindowClass *klass)
 static void
 posman_window_init (PosmanWindow *self)
 {
+  self->list_stor_cust = (GObject*) g_list_store_new(GTK_TYPE_LIST_BOX_ROW);
+  self->list_stor_cmnd = (GObject*) g_list_store_new(GTK_TYPE_LIST_BOX_ROW);
   gtk_widget_init_template (GTK_WIDGET (self));
   posman_window_init_database(self);
 }
