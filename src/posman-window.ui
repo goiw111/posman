@@ -52,7 +52,8 @@
                 </style>
               <child>
                 <object class="PosmanPanelList" id="panel_list">
-                  <property name="list-stor">list_stor</property>
+                  <property name="list-stor-cust">list_stor_cust</property>
+                  <property name="list-stor-cmnd">list_stor_cmnd</property>
                   <property name="visible">True</property>
                   <property name="can_focus">True</property>
                   <signal name="notify::view" handler="panel_list_view_changed_cb" object="PosmanWindow" swapped="no" />
@@ -220,7 +221,10 @@
       <widget name="sidebar_box"/>
     </widgets>
   </object>
-  <object class="GListStore" id="list_stor">
+  <object class="GListStore" id="list_stor_cust">
+    <property name="item-type">GTK_TYPE_LIST_BOX_ROW</property>
+  </object>
+  <object class="GListStore" id="list_stor_cmnd">
     <property name="item-type">GTK_TYPE_LIST_BOX_ROW</property>
   </object>
 </interface>

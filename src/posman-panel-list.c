@@ -1,21 +1,18 @@
 #include "posman-panel-list.h"
-#include "posman-panel-model.h"
-#include "posman-panel-loader.h"
+#include "posman-list-box-data.h"
 #include <sqlite3.h>
 
 struct _PosmanPanelList
 {
   GtkStack                  parent_instance;
 
-  GtkWidget                 *main_listbox;
-
   GtkWidget                 *cust_listbox;
+  GtkWidget                 *cmnd_listbox;
 
   posmanpanellistview       view;
 
-  GObject                   *list_stor;
-
-
+  GObject                   *list_stor_cust;
+  GObject                   *list_stor_cmnd;
 };
 
 G_DEFINE_TYPE (PosmanPanelList, posman_panel_list, GTK_TYPE_STACK)
@@ -23,7 +20,8 @@ G_DEFINE_TYPE (PosmanPanelList, posman_panel_list, GTK_TYPE_STACK)
 enum {
   PROP_0,
   PROP_VIEW,
-  PROP_STOR,
+  PROP_STOR_CUST,
+  PROP_STOR_CMND,
   N_PROPS
 };
 
@@ -40,10 +38,10 @@ get_listbox_from_view(PosmanPanelList     *self,
   switch (view)
     {
     case posman_panel_list_main:
-      return self->main_listbox;
+      return self->cust_listbox;
 
     case posman_panel_list_cust:
-      return self->cust_listbox;
+      return self->cmnd_listbox;
 
     default:
       return NULL;
@@ -84,8 +82,10 @@ posman_panel_list_dispose(GObject *object)
 {
   PosmanPanelList *self = (PosmanPanelList *)object;
 
-  if (self->list_stor)
-    g_object_unref(self->list_stor);
+  if (self->list_stor_cust)
+    g_object_unref(self->list_stor_cust);
+  if (self->list_stor_cmnd)
+    g_object_unref(self->list_stor_cmnd);
 
   G_OBJECT_CLASS (posman_panel_list_parent_class)->dispose(object);
 }
@@ -122,13 +122,35 @@ posman_panel_list_set_property (GObject      *object,
         posman_panel_list_set_view (self, g_value_get_int (value));
         break;
 
-      case PROP_STOR:
-        posman_panel_list_set_model(self, g_value_get_object(value));
+      case PROP_STOR_CUST:
+        posman_panel_list_set_model_cust(self, g_value_get_object(value));
+        break;
+
+      case PROP_STOR_CMND:
+        posman_panel_list_set_model_cmnd(self, g_value_get_object(value));
         break;
 
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
     }
+}
+
+static void
+posman_panel_list_constructed(GObject *object)
+{
+  PosmanPanelList *self = (PosmanPanelList *)object;
+
+  gtk_list_box_bind_model(GTK_LIST_BOX (self->cust_listbox),
+                          G_LIST_MODEL (self->list_stor_cust),
+                          row_cust_data_create,
+                          NULL,NULL);
+
+  gtk_list_box_bind_model(GTK_LIST_BOX (self->cmnd_listbox),
+                          G_LIST_MODEL (self->list_stor_cmnd),
+                          row_cmnd_data_create,
+                          NULL,NULL);
+
+  G_OBJECT_CLASS (posman_panel_list_parent_class)->constructed(object);
 }
 
 static void
@@ -142,10 +164,10 @@ posman_panel_list_class_init (PosmanPanelListClass *klass)
 
   gtk_widget_class_bind_template_child (widget_class,
                                         PosmanPanelList,
-                                        main_listbox);
+                                        cust_listbox);
   gtk_widget_class_bind_template_child (widget_class,
                                         PosmanPanelList,
-                                        cust_listbox);
+                                        cmnd_listbox);
 
   gtk_widget_class_bind_template_callback (widget_class,
                                            cust_row_activated_cb);
@@ -154,6 +176,7 @@ posman_panel_list_class_init (PosmanPanelListClass *klass)
   object_class->dispose  = posman_panel_list_dispose;
   object_class->get_property = posman_panel_list_get_property;
   object_class->set_property = posman_panel_list_set_property;
+  object_class->constructed  = posman_panel_list_constructed;
 
   properties[PROP_VIEW] =
   g_param_spec_int ("view",
@@ -164,10 +187,19 @@ posman_panel_list_class_init (PosmanPanelListClass *klass)
                     posman_panel_list_main ,
                     G_PARAM_READWRITE | G_PARAM_CONSTRUCT | G_PARAM_EXPLICIT_NOTIFY);
 
-  properties[PROP_STOR] =
-  g_param_spec_object("list-stor",
-                      "list-stor",
-                      "GListStor proprety",
+  properties[PROP_STOR_CUST] =
+  g_param_spec_object("list-stor-cust",
+                      "list-stor-cust",
+                      "GListStor proprety for customers",
+                      G_TYPE_LIST_STORE,
+                      G_PARAM_READWRITE | G_PARAM_EXPLICIT_NOTIFY);
+
+  g_object_class_install_properties (object_class, N_PROPS, properties);
+
+  properties[PROP_STOR_CMND] =
+  g_param_spec_object("list-stor-cmnd",
+                      "list-stor-cmnd",
+                      "GListStor proprety for commend",
                       G_TYPE_LIST_STORE,
                       G_PARAM_READWRITE | G_PARAM_EXPLICIT_NOTIFY);
 
@@ -207,16 +239,31 @@ posman_panel_list_get_view(PosmanPanelList *self)
 }
 
 void
-posman_panel_list_set_model(PosmanPanelList *self,
-                            GObject         *list_stor)
+posman_panel_list_set_model_cust(PosmanPanelList *self,
+                                 GObject         *list_stor)
 {
   g_return_if_fail (POSMAN_IS_PANEL_LIST (self));
   g_return_if_fail (list_stor == NULL || G_IS_OBJECT (list_stor));
 
-  if (self->list_stor)
-    g_object_unref(self->list_stor);
+  if (self->list_stor_cust)
+    g_object_unref(self->list_stor_cust);
 
-  self->list_stor = list_stor;
+  self->list_stor_cust = list_stor;
 
-  g_object_notify_by_pspec (G_OBJECT (self), properties[PROP_STOR]);
+  g_object_notify_by_pspec (G_OBJECT (self), properties[PROP_STOR_CUST]);
+}
+
+void
+posman_panel_list_set_model_cmnd(PosmanPanelList *self,
+                                 GObject         *list_stor)
+{
+  g_return_if_fail (POSMAN_IS_PANEL_LIST (self));
+  g_return_if_fail (list_stor == NULL || G_IS_OBJECT (list_stor));
+
+  if (self->list_stor_cmnd)
+    g_object_unref(self->list_stor_cmnd);
+
+  self->list_stor_cmnd = list_stor;
+
+  g_object_notify_by_pspec (G_OBJECT (self), properties[PROP_STOR_CMND]);
 }

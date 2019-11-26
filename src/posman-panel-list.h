@@ -27,7 +27,10 @@ posman_panel_list_set_view(PosmanPanelList *self,
                            posmanpanellistview view);
 
 void
-posman_panel_list_set_model(PosmanPanelList *self,
-                            GObject         *list_stor);
+posman_panel_list_set_model_cust(PosmanPanelList *self,
+                                 GObject         *list_stor);
+void
+posman_panel_list_set_model_cmnd(PosmanPanelList *self,
+                                 GObject         *list_stor);
 
 G_END_DECLS

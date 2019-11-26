@@ -2,8 +2,7 @@ posman_sources = [
   'main.c',
   'posman-window.c',
   'posman-panel-list.c',
-  'posman-panel-model.c',
-  'posman-panel-loader.c',
+  'posman-list-box-data.c',
   'posman-action-menu.c',
 ]
 
