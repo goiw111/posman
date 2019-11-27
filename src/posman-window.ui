@@ -55,6 +55,7 @@
                   <property name="visible">True</property>
                   <property name="can_focus">True</property>
                   <signal name="notify::view" handler="panel_list_view_changed_cb" object="PosmanWindow" swapped="no" />
+                  <signal name="row-activated" handler="panel_list_row_activated_cb" object="PosmanWindow" swapped="no" />
                 </object>
               </child>
               </object>

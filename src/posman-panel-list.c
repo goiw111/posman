@@ -25,7 +25,13 @@ enum {
   N_PROPS
 };
 
+enum {
+  ROW_ACTIVATED,
+  LAST_SIGNAL
+};
+
 static GParamSpec *properties [N_PROPS] = { NULL, };
+static guint signals[LAST_SIGNAL] = { 0 };
 
 /*
  * Auxiliary methods
@@ -66,7 +72,7 @@ cust_row_activated_cb(GtkListBox      *box,
                       GtkListBoxRow   *row,
                       PosmanPanelList *self)
 {
-
+  g_signal_emit (self, signals[ROW_ACTIVATED], 0, box, row);
 }
 /*object*/
 
@@ -193,6 +199,17 @@ posman_panel_list_class_init (PosmanPanelListClass *klass)
 
   g_object_class_install_properties (object_class, N_PROPS, properties);
 
+  signals[ROW_ACTIVATED] =
+    g_signal_new ("row-activated",
+                  G_TYPE_FROM_CLASS (object_class),
+                  G_SIGNAL_RUN_LAST,
+                  0,
+                  NULL, NULL,
+                  NULL,
+                  G_TYPE_NONE, 2,
+                  GTK_TYPE_LIST_BOX,
+                  GTK_TYPE_LIST_BOX_ROW);
+
 }
 
 static void
@@ -230,14 +247,14 @@ void
 posman_panel_list_set_model_cust(PosmanPanelList *self,
                                  GObject         *list_stor)
 {
-  g_print("cust\n");
   g_return_if_fail (POSMAN_IS_PANEL_LIST (self));
   g_return_if_fail (list_stor == NULL || G_IS_OBJECT (list_stor));
 
   if (self->list_stor_cust)
     g_object_unref(self->list_stor_cust);
 
-  self->list_stor_cust = list_stor;
+
+  self->list_stor_cust = g_object_ref (list_stor);
 
   if (self->list_stor_cust)
       gtk_list_box_bind_model(GTK_LIST_BOX (self->cust_listbox),
@@ -252,14 +269,13 @@ void
 posman_panel_list_set_model_cmnd(PosmanPanelList *self,
                                  GObject         *list_stor)
 {
-  g_print("cmnd\n");
   g_return_if_fail (POSMAN_IS_PANEL_LIST (self));
   g_return_if_fail (list_stor == NULL || G_IS_OBJECT (list_stor));
 
   if (self->list_stor_cmnd)
     g_object_unref(self->list_stor_cmnd);
 
-  self->list_stor_cmnd = list_stor;
+  self->list_stor_cmnd = g_object_ref (list_stor);
 
   if (self->list_stor_cmnd)
       gtk_list_box_bind_model(GTK_LIST_BOX (self->cmnd_listbox),
