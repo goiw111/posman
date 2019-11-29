@@ -182,23 +182,22 @@ select_pressed_cb(GtkButton      *button,
   g_autofree gchar      *sql = NULL;
 
   name = posman_panel_list_get_name_entry_text (list);
-  /*if(name == NULL || !g_strcmp0(name,"") || g_strv_length((gchar**)&name) <= 3)
-    return;*/
+  if(name == NULL || strlen(name) <= 5)
+    return;
   phone = posman_panel_list_get_phone_entry_text (list);
-  /*if(phone == NULL || !g_strcmp0(phone,"") || g_strv_length((gchar**)&phone) <= 10)
-    return;*/
+  if(phone == NULL )
+    return;
   adress = posman_panel_list_get_adress_entry_text (list);
-  /*if(adress == NULL || !g_strcmp0(adress,"") || g_strv_length((gchar**)&adress) <= 3)
-    return;*/
+  if(adress == NULL || strlen(adress) <= 5)
+    return;
   domain_id = posman_panel_list_get_domain_combobox_id (list);
-  /*if(domain_id == NULL || !g_strcmp0(domain_id,""))
-    return;*/
+  if(domain_id == NULL)
+    return;
   description = posman_panel_list_get_description_textview_text (list);
-  /*if(description == NULL || !g_strcmp0(description,"") || g_strv_length((gchar**)&description) < 5)
-    return;*/
-
-  g_print("here");
-
+  if(description == NULL)
+    return;
+  g_print("here %lu \n", strlen (name));
+  return;
   sql = g_strdup_printf("INSERT INTO customer "
                         "(full_name,address,domain_id,description,phone)"
                         " VALUES (' %s',' %s',%s,' %s',' %s');",
