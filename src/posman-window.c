@@ -44,6 +44,9 @@ enum
 G_DEFINE_TYPE (PosmanWindow, posman_window, GTK_TYPE_APPLICATION_WINDOW)
 
 static void
+posman_window_update_cust(PosmanWindow *self);
+
+static void
 posman_window_init_database(PosmanWindow *self)
 {
   g_autofree char *dir = NULL;
@@ -171,7 +174,47 @@ select_pressed_cb(GtkButton      *button,
                   PosmanWindow   *self)
 {
   PosmanPanelList       *list = POSMAN_PANEL_LIST (self->panel_list);
+  const gchar           *name,*phone,*adress,*domain_id;
+  gchar                 *description;
 
+  int                   rc;
+  char                  *err_msg = 0;
+  g_autofree gchar      *sql = NULL;
+
+  name = posman_panel_list_get_name_entry_text (list);
+  /*if(name == NULL || !g_strcmp0(name,"") || g_strv_length((gchar**)&name) <= 3)
+    return;*/
+  phone = posman_panel_list_get_phone_entry_text (list);
+  /*if(phone == NULL || !g_strcmp0(phone,"") || g_strv_length((gchar**)&phone) <= 10)
+    return;*/
+  adress = posman_panel_list_get_adress_entry_text (list);
+  /*if(adress == NULL || !g_strcmp0(adress,"") || g_strv_length((gchar**)&adress) <= 3)
+    return;*/
+  domain_id = posman_panel_list_get_domain_combobox_id (list);
+  /*if(domain_id == NULL || !g_strcmp0(domain_id,""))
+    return;*/
+  description = posman_panel_list_get_description_textview_text (list);
+  /*if(description == NULL || !g_strcmp0(description,"") || g_strv_length((gchar**)&description) < 5)
+    return;*/
+
+  g_print("here");
+
+  sql = g_strdup_printf("INSERT INTO customer "
+                        "(full_name,address,domain_id,description,phone)"
+                        " VALUES (' %s',' %s',%s,' %s',' %s');",
+                        name,adress,domain_id,
+                        description,phone);
+
+  rc = sqlite3_exec (self->db,sql,0,0,&err_msg);
+  if (rc != SQLITE_OK)
+    {
+      g_warning ("Failed to execute statement: %s\n", err_msg);
+      return;
+    }
+
+  posman_window_update_cust(self);
+
+  g_free(description);
 }
 
 static void
@@ -223,9 +266,9 @@ static void posman_window_finalize(GObject *object)
   G_OBJECT_CLASS (posman_window_parent_class)->finalize (object);
 }
 
-static void posman_window_constructed(GObject *object)
+static void
+posman_window_update_cust(PosmanWindow *self)
 {
-  PosmanWindow *self = POSMAN_WINDOW (object);
   GPtrArray    *rows = get_custs (self);
   GListStore   *lstr = g_list_store_new(GTK_TYPE_LIST_BOX_ROW);
 
@@ -235,6 +278,14 @@ static void posman_window_constructed(GObject *object)
 
   posman_panel_list_set_model_cust(POSMAN_PANEL_LIST (self->panel_list),G_OBJECT (lstr));
   g_object_unref (lstr);
+
+}
+
+static void posman_window_constructed(GObject *object)
+{
+  PosmanWindow *self = POSMAN_WINDOW (object);
+
+  posman_window_update_cust(self);
 
   G_OBJECT_CLASS (posman_window_parent_class)->constructed (object);
 }

@@ -183,6 +183,14 @@ posman_panel_list_class_init (PosmanPanelListClass *klass)
 
   gtk_widget_class_bind_template_child (widget_class,PosmanPanelList,
                                         domain_combobox);
+  gtk_widget_class_bind_template_child (widget_class,PosmanPanelList,
+                                        name_entry);
+  gtk_widget_class_bind_template_child (widget_class,PosmanPanelList,
+                                        adress_entry);
+  gtk_widget_class_bind_template_child (widget_class,PosmanPanelList,
+                                        phone_entry);
+  gtk_widget_class_bind_template_child (widget_class,PosmanPanelList,
+                                        description_textview);
 
   gtk_widget_class_bind_template_callback (widget_class,
                                            cmnd_row_activated_cb);
@@ -329,10 +337,50 @@ posman_panel_list_set_model_domain(PosmanPanelList  *self,
   if (self->list_stor_domain)
     g_object_unref(self->list_stor_domain);
 
-  self->list_stor_domain = g_object_ref (list_stor);
+  self->list_stor_domain = (GtkWidget *) g_object_ref (list_stor);
   if(self->list_stor_domain)
     gtk_combo_box_set_model(GTK_COMBO_BOX (self->domain_combobox),
                             GTK_TREE_MODEL (list_stor));
 
   g_object_notify_by_pspec (G_OBJECT (self), properties[PROP_STOR_DOMAIN]);
+}
+
+const gchar *
+posman_panel_list_get_name_entry_text(PosmanPanelList  *self)
+{
+
+  return gtk_entry_get_text (GTK_ENTRY (self->name_entry));
+}
+
+const gchar *
+posman_panel_list_get_adress_entry_text(PosmanPanelList  *self)
+{
+
+  return gtk_entry_get_text (GTK_ENTRY (self->adress_entry));
+}
+
+const gchar *
+posman_panel_list_get_phone_entry_text(PosmanPanelList  *self)
+{
+
+  return gtk_entry_get_text (GTK_ENTRY (self->phone_entry));
+}
+
+const gchar *
+posman_panel_list_get_domain_combobox_id(PosmanPanelList  *self)
+{
+
+  return gtk_combo_box_get_active_id (GTK_COMBO_BOX (self->domain_combobox));
+}
+
+gchar *
+posman_panel_list_get_description_textview_text(PosmanPanelList  *self)
+{
+  GtkTextIter start, end;
+  GtkTextBuffer *buffer =
+  gtk_text_view_get_buffer (GTK_TEXT_VIEW (self->description_textview));
+
+  gtk_text_buffer_get_bounds (buffer, &start, &end);
+
+  return gtk_text_buffer_get_text (buffer, &start, &end, FALSE);
 }

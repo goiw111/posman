@@ -37,4 +37,14 @@ void
 posman_panel_list_set_model_domain(PosmanPanelList  *self,
                                    GtkListStore     *list_stor);
 
+const gchar *
+posman_panel_list_get_name_entry_text(PosmanPanelList  *self);
+const gchar *
+posman_panel_list_get_adress_entry_text(PosmanPanelList  *self);
+const gchar *
+posman_panel_list_get_phone_entry_text(PosmanPanelList  *self);
+const gchar *
+posman_panel_list_get_domain_combobox_id(PosmanPanelList  *self);
+gchar *
+posman_panel_list_get_description_textview_text(PosmanPanelList  *self);
 G_END_DECLS
