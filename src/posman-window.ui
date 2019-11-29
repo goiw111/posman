@@ -162,11 +162,33 @@
               <object class="PosmanActionMenu" id="action_menu">
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
+                <signal name="add_pressed" handler="add_pressed_cb" object="PosmanWindow" swapped="no" />
                 <child>
-                  <object class="GtkImage">
+                  <object class="GtkImage" id="menu_image">
                     <property name="visible">True</property>
                     <property name="can_focus">False</property>
                     <property name="icon_name">open-menu-symbolic</property>
+                  </object>
+                </child>
+                <style>
+                  <class name="image-button"/>
+                </style>
+              </object>
+              <packing>
+                <property name="pack_type">end</property>
+                <property name="position">3</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkButton" id="select_button">
+                <property name="visible">False</property>
+                <property name="can_focus">True</property>
+                <signal name="clicked" handler="select_pressed_cb" object="PosmanWindow" swapped="no" />
+                <child>
+                  <object class="GtkImage" id="select_image">
+                    <property name="visible">True</property>
+                    <property name="can_focus">False</property>
+                    <property name="icon_name">object-select-symbolic</property>
                   </object>
                 </child>
                 <style>

@@ -14,8 +14,8 @@ struct _PosmanWindow
   GtkWidget             *previous_button;
   GtkWidget             *panel_list;
   GtkWidget             *action_menu;
-  GObject               *list_stor_cust;
-  GObject               *list_stor_cmnd;
+  GtkWidget             *select_button;
+
 
   /* database */
   sqlite3               *db;
@@ -43,7 +43,7 @@ enum
 
 G_DEFINE_TYPE (PosmanWindow, posman_window, GTK_TYPE_APPLICATION_WINDOW)
 
-static int
+static void
 posman_window_init_database(PosmanWindow *self)
 {
   g_autofree char *dir = NULL;
@@ -64,7 +64,6 @@ get_custs(PosmanWindow *self)
 {
   sqlite3_stmt *stmt;
   int          rc;
-  int          i;
   GPtrArray    *array;
 
   rc = sqlite3_prepare_v2(self->db,"SELECT id, full_name FROM customer;",-1,
@@ -95,7 +94,6 @@ get_cmnds(PosmanWindow *self,
 {
   sqlite3_stmt *stmt;
   int          rc;
-  int          i;
   GPtrArray    *array;
   g_autofree gchar    *sql = NULL;
 
@@ -121,9 +119,63 @@ get_cmnds(PosmanWindow *self,
   sqlite3_finalize(stmt);
   return array;
 }
+
+static GtkListStore*
+get_domains(PosmanWindow  *self)
+{
+  sqlite3_stmt  *stmt;
+  int           rc;
+  GtkListStore  *list;
+
+  list = gtk_list_store_new(2,G_TYPE_STRING,G_TYPE_STRING);
+  rc = sqlite3_prepare_v2(self->db,"SELECT id, name FROM domains;",-1,
+                          &stmt,NULL);
+  if (rc != SQLITE_OK)
+    {
+      g_warning ("Failed to execute statement: %s\n", sqlite3_errmsg(self->db));
+      return NULL;
+    }
+
+  while(sqlite3_step(stmt) != SQLITE_DONE)
+    gtk_list_store_insert_with_values(list,NULL,-1,
+                                      0,sqlite3_column_text (stmt, 0),
+                                      1,sqlite3_column_text (stmt, 1),
+                                      -1);
+
+  sqlite3_finalize(stmt);
+  return list;
+}
 /* callback */
 
-void panel_list_view_changed_cb (PosmanPanelList *panel_list,
+static void
+add_pressed_cb(PosmanActionMenu *menu,
+               PosmanWindow     *self)
+{
+  PosmanPanelList   *list;
+  GtkListStore      *stor;
+
+  list = POSMAN_PANEL_LIST (self->panel_list);
+  stor = get_domains(self);
+
+  posman_panel_list_set_model_domain (list, stor);
+  g_object_unref (stor);
+
+  posman_panel_list_set_view (POSMAN_PANEL_LIST (self->panel_list), posman_panel_list_add_cust);
+
+  gtk_widget_set_visible(GTK_WIDGET (menu),FALSE);
+  gtk_widget_set_visible(GTK_WIDGET (self->select_button),TRUE);
+}
+
+static void
+select_pressed_cb(GtkButton      *button,
+                  PosmanWindow   *self)
+{
+  PosmanPanelList       *list = POSMAN_PANEL_LIST (self->panel_list);
+
+}
+
+static void
+panel_list_view_changed_cb (PosmanPanelList *panel_list,
                                  GParamSpec  *pspec,
                                  PosmanWindow    *self)
 {
@@ -175,13 +227,14 @@ static void posman_window_constructed(GObject *object)
 {
   PosmanWindow *self = POSMAN_WINDOW (object);
   GPtrArray    *rows = get_custs (self);
+  GListStore   *lstr = g_list_store_new(GTK_TYPE_LIST_BOX_ROW);
 
-  g_list_store_splice(G_LIST_STORE (self->list_stor_cust),
+  g_list_store_splice(lstr,
                       0,0,rows->pdata,
                       rows->len);
 
-  posman_panel_list_set_model_cust(POSMAN_PANEL_LIST (self->panel_list),self->list_stor_cust);
-  g_object_unref (self->list_stor_cust);
+  posman_panel_list_set_model_cust(POSMAN_PANEL_LIST (self->panel_list),G_OBJECT (lstr));
+  g_object_unref (lstr);
 
   G_OBJECT_CLASS (posman_window_parent_class)->constructed (object);
 }
@@ -200,9 +253,13 @@ posman_window_class_init (PosmanWindowClass *klass)
   gtk_widget_class_bind_template_child (widget_class, PosmanWindow, previous_button);
   gtk_widget_class_bind_template_child (widget_class, PosmanWindow, panel_list);
   gtk_widget_class_bind_template_child (widget_class, PosmanWindow, action_menu);
+  gtk_widget_class_bind_template_child (widget_class, PosmanWindow, select_button);
+
   gtk_widget_class_bind_template_callback (widget_class, panel_list_view_changed_cb);
   gtk_widget_class_bind_template_callback (widget_class, previous_button_clicked_cb);
   gtk_widget_class_bind_template_callback (widget_class, panel_list_row_activated_cb);
+  gtk_widget_class_bind_template_callback (widget_class, add_pressed_cb);
+  gtk_widget_class_bind_template_callback (widget_class, select_pressed_cb);
 
   g_type_ensure(POSMAN_TYPE_PANEL_LIST);
   g_type_ensure(POSMAN_TYPE_ACTION_MENU);
@@ -211,8 +268,6 @@ posman_window_class_init (PosmanWindowClass *klass)
 static void
 posman_window_init (PosmanWindow *self)
 {
-  self->list_stor_cust = (GObject*) g_list_store_new(GTK_TYPE_LIST_BOX_ROW);
-  self->list_stor_cmnd = (GObject*) g_list_store_new(GTK_TYPE_LIST_BOX_ROW);
   gtk_widget_init_template (GTK_WIDGET (self));
   posman_window_init_database(self);
 }

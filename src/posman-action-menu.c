@@ -1,11 +1,8 @@
 #include "posman-action-menu.h"
 
-struct _PosmanActionMenuClass
+struct _PosmanActionMenu
 {
-  GtkMenuButtonClass parent_class;
-
-  void          (*add_pressed)    (PosmanActionMenu  *menu);
-  void          (*remove_pressed) (PosmanActionMenu  *menu);
+  GtkMenuButton parent_instance;
 };
 
 G_DEFINE_TYPE (PosmanActionMenu, posman_action_menu, GTK_TYPE_MENU_BUTTON)
@@ -91,15 +88,13 @@ posman_action_menu_class_init (PosmanActionMenuClass *klass)
   object_class->get_property = posman_action_menu_get_property;
   object_class->set_property = posman_action_menu_set_property;
 
-  klass->add_pressed     = posman_real_action_menu_add_pressed;
-  klass->remove_pressed  = posman_real_action_menu_remove_pressed;
 
   gtk_widget_class_set_template_from_resource (widget_class, "/org/pos/manager/posman-action-menu.ui");
 
   menu_signals[ADD_PRESSED] = g_signal_new("add_pressed",
                               G_OBJECT_CLASS_TYPE (object_class),
                               G_SIGNAL_RUN_FIRST,
-                              G_STRUCT_OFFSET(PosmanActionMenuClass, add_pressed),
+                              0,
                               NULL, NULL,
                               NULL,
                               G_TYPE_NONE, 0);
@@ -107,7 +102,7 @@ posman_action_menu_class_init (PosmanActionMenuClass *klass)
   menu_signals[REMOVE_PRESSED] = g_signal_new("remove_pressed",
                               G_OBJECT_CLASS_TYPE (object_class),
                               G_SIGNAL_RUN_FIRST,
-                              G_STRUCT_OFFSET(PosmanActionMenuClass, remove_pressed),
+                              0,
                               NULL, NULL,
                               NULL,
                               G_TYPE_NONE, 0);

@@ -7,7 +7,8 @@ G_BEGIN_DECLS
 
 typedef enum{
   posman_panel_list_main,
-  posman_panel_list_cust
+  posman_panel_list_cust,
+  posman_panel_list_add_cust
 } posmanpanellistview;
 
 #define POSMAN_TYPE_PANEL_LIST (posman_panel_list_get_type())
@@ -32,5 +33,8 @@ posman_panel_list_set_model_cust(PosmanPanelList *self,
 void
 posman_panel_list_set_model_cmnd(PosmanPanelList *self,
                                  GObject         *list_stor);
+void
+posman_panel_list_set_model_domain(PosmanPanelList  *self,
+                                   GtkListStore     *list_stor);
 
 G_END_DECLS

@@ -8,11 +8,21 @@ struct _PosmanPanelList
 
   GtkWidget                 *cust_listbox;
   GtkWidget                 *cmnd_listbox;
+  GtkWidget                 *add_cust;
 
   posmanpanellistview       view;
 
   GObject                   *list_stor_cust;
   GObject                   *list_stor_cmnd;
+  GtkWidget                 *list_stor_domain;
+
+  GtkWidget                 *name_entry;
+  GtkWidget                 *adress_entry;
+  GtkWidget                 *phone_entry;
+  GtkWidget                 *domain_combobox;
+  GtkWidget                 *description_textview;
+
+
 };
 
 G_DEFINE_TYPE (PosmanPanelList, posman_panel_list, GTK_TYPE_STACK)
@@ -22,6 +32,7 @@ enum {
   PROP_VIEW,
   PROP_STOR_CUST,
   PROP_STOR_CMND,
+  PROP_STOR_DOMAIN,
   N_PROPS
 };
 
@@ -48,6 +59,9 @@ get_listbox_from_view(PosmanPanelList     *self,
 
     case posman_panel_list_cust:
       return self->cmnd_listbox;
+
+    case posman_panel_list_add_cust:
+      return self->add_cust;
 
     default:
       return NULL;
@@ -142,6 +156,9 @@ posman_panel_list_set_property (GObject      *object,
       case PROP_STOR_CMND:
         posman_panel_list_set_model_cmnd(self, g_value_get_object(value));
         break;
+      case PROP_STOR_DOMAIN:
+        posman_panel_list_set_model_domain(self,g_value_get_object(value));
+        break;
 
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
@@ -157,12 +174,15 @@ posman_panel_list_class_init (PosmanPanelListClass *klass)
   gtk_widget_class_set_template_from_resource (widget_class,
                                                "/org/pos/manager/posman-panel-list.ui");
 
-  gtk_widget_class_bind_template_child (widget_class,
-                                        PosmanPanelList,
+  gtk_widget_class_bind_template_child (widget_class,PosmanPanelList,
                                         cust_listbox);
-  gtk_widget_class_bind_template_child (widget_class,
-                                        PosmanPanelList,
+  gtk_widget_class_bind_template_child (widget_class,PosmanPanelList,
                                         cmnd_listbox);
+  gtk_widget_class_bind_template_child (widget_class,PosmanPanelList,
+                                        add_cust);
+
+  gtk_widget_class_bind_template_child (widget_class,PosmanPanelList,
+                                        domain_combobox);
 
   gtk_widget_class_bind_template_callback (widget_class,
                                            cmnd_row_activated_cb);
@@ -179,7 +199,7 @@ posman_panel_list_class_init (PosmanPanelListClass *klass)
                     "view",
                     "the current view of the sidelist",
                     posman_panel_list_main ,
-                    posman_panel_list_cust ,
+                    posman_panel_list_add_cust ,
                     posman_panel_list_main ,
                     G_PARAM_READWRITE | G_PARAM_CONSTRUCT | G_PARAM_EXPLICIT_NOTIFY);
 
@@ -195,6 +215,13 @@ posman_panel_list_class_init (PosmanPanelListClass *klass)
                       "list-stor-cmnd",
                       "GListStor proprety for commend",
                       G_TYPE_LIST_MODEL,
+                      G_PARAM_READWRITE | G_PARAM_EXPLICIT_NOTIFY);
+
+  properties[PROP_STOR_DOMAIN] =
+  g_param_spec_object("list-stor-domain",
+                      "list-stor-domain",
+                      "gtkliststor proprety for domains",
+                      GTK_TYPE_LIST_STORE,
                       G_PARAM_READWRITE | G_PARAM_EXPLICIT_NOTIFY);
 
   g_object_class_install_properties (object_class, N_PROPS, properties);
@@ -226,7 +253,12 @@ posman_panel_list_set_view(PosmanPanelList *self,
 
   if(self->view == view)
     return;
+
+  gboolean crossfade = view == posman_panel_list_add_cust || self->view == posman_panel_list_add_cust;
+
   self->view = view;
+
+  gtk_stack_set_transition_type(GTK_STACK (self), crossfade ? GTK_STACK_TRANSITION_TYPE_CROSSFADE : GTK_STACK_TRANSITION_TYPE_SLIDE_LEFT_RIGHT);
 
   gtk_stack_set_visible_child (GTK_STACK (self),
                                get_listbox_from_view (self, view));
@@ -285,4 +317,22 @@ posman_panel_list_set_model_cmnd(PosmanPanelList *self,
 
 
   g_object_notify_by_pspec (G_OBJECT (self), properties[PROP_STOR_CMND]);
+}
+
+void
+posman_panel_list_set_model_domain(PosmanPanelList  *self,
+                                   GtkListStore     *list_stor)
+{
+  g_return_if_fail (POSMAN_IS_PANEL_LIST (self));
+  g_return_if_fail (list_stor == NULL || GTK_IS_LIST_STORE (list_stor));
+
+  if (self->list_stor_domain)
+    g_object_unref(self->list_stor_domain);
+
+  self->list_stor_domain = g_object_ref (list_stor);
+  if(self->list_stor_domain)
+    gtk_combo_box_set_model(GTK_COMBO_BOX (self->domain_combobox),
+                            GTK_TREE_MODEL (list_stor));
+
+  g_object_notify_by_pspec (G_OBJECT (self), properties[PROP_STOR_DOMAIN]);
 }
