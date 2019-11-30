@@ -15,6 +15,8 @@ struct _PosmanWindow
   GtkWidget             *panel_list;
   GtkWidget             *action_menu;
   GtkWidget             *select_button;
+  GtkWidget             *content_label;
+  GtkWidget             *info_bar;
 
 
   /* database */
@@ -181,23 +183,46 @@ select_pressed_cb(GtkButton      *button,
   char                  *err_msg = 0;
   g_autofree gchar      *sql = NULL;
 
+  g_autofree gchar      *msg = NULL;
+  g_autofree gchar      *first_msg = NULL;
+  g_autofree gchar      *name_msg = NULL;
+  g_autofree gchar      *phone_msg = NULL;
+  g_autofree gchar      *address_msg = NULL;
+  g_autofree gchar      *domain_msg = NULL;
+
+  first_msg = g_strdup ("warning :");
+
+
   name = posman_panel_list_get_name_entry_text (list);
-  if(name == NULL || strlen(name) <= 5)
-    return;
+  if(name == NULL || strlen(name) < 5)
+    name_msg = g_strdup (" the name not acceptable");
+
   phone = posman_panel_list_get_phone_entry_text (list);
-  if(phone == NULL )
-    return;
+  if(phone == NULL || (g_strcmp0(phone,"") && strlen(phone) < 10))
+    phone_msg = g_strdup (" the number not acceptable");
+
   adress = posman_panel_list_get_adress_entry_text (list);
-  if(adress == NULL || strlen(adress) <= 5)
-    return;
+  if(adress == NULL || strlen(adress) < 3 )
+    address_msg = g_strdup (" the address not acceptable");
+
   domain_id = posman_panel_list_get_domain_combobox_id (list);
   if(domain_id == NULL)
-    return;
+    domain_msg = g_strdup (" please select a domain");
+
   description = posman_panel_list_get_description_textview_text (list);
-  if(description == NULL)
-    return;
-  g_print("here %lu \n", strlen (name));
-  return;
+
+  if(name_msg || phone_msg || address_msg || domain_msg)
+    {
+      msg = g_strdup_printf("%s%s%s%s%s\n",first_msg,
+                      name_msg == NULL ? "" : name_msg,
+                      phone_msg == NULL ? "" : phone_msg,
+                      address_msg == NULL ? "" : address_msg,
+                      domain_msg == NULL ? "" : domain_msg);
+
+      gtk_label_set_text (GTK_LABEL (self->content_label), msg);
+      gtk_widget_set_visible (self->info_bar, TRUE);
+    }
+
   sql = g_strdup_printf("INSERT INTO customer "
                         "(full_name,address,domain_id,description,phone)"
                         " VALUES (' %s',' %s',%s,' %s',' %s');",
@@ -211,8 +236,12 @@ select_pressed_cb(GtkButton      *button,
       return;
     }
 
-  posman_window_update_cust(self);
+  gtk_widget_set_visible(GTK_WIDGET (self->action_menu),TRUE);
+  gtk_widget_set_visible(GTK_WIDGET (self->select_button),FALSE);
 
+  posman_panel_list_set_view (POSMAN_PANEL_LIST (self->panel_list), posman_panel_list_main);
+
+  posman_window_update_cust(self);
   g_free(description);
 }
 
@@ -304,6 +333,8 @@ posman_window_class_init (PosmanWindowClass *klass)
   gtk_widget_class_bind_template_child (widget_class, PosmanWindow, panel_list);
   gtk_widget_class_bind_template_child (widget_class, PosmanWindow, action_menu);
   gtk_widget_class_bind_template_child (widget_class, PosmanWindow, select_button);
+  gtk_widget_class_bind_template_child (widget_class, PosmanWindow, content_label);
+  gtk_widget_class_bind_template_child (widget_class, PosmanWindow, info_bar);
 
   gtk_widget_class_bind_template_callback (widget_class, panel_list_view_changed_cb);
   gtk_widget_class_bind_template_callback (widget_class, previous_button_clicked_cb);
