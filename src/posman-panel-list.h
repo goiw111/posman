@@ -47,4 +47,6 @@ const gchar *
 posman_panel_list_get_domain_combobox_id(PosmanPanelList  *self);
 gchar *
 posman_panel_list_get_description_textview_text(PosmanPanelList  *self);
+void
+posman_panel_list_clear_add_cust(PosmanPanelList  *self);
 G_END_DECLS

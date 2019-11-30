@@ -1,4 +1,15 @@
 #include "posman-list-box-data.h"
+#include "posman-window.h"
+#include <sqlite3.h>
+
+typedef struct {
+  PosmanWindow  *win;
+  RowCustData   *data;
+  GtkWidget     *menu;
+  GtkWidget     *slct;
+  gulong        handler_id_menu;
+  gulong        handler_id_slct;
+} reamovedata;
 
 void
 row_cust_data_free(RowCustData *row)
@@ -8,14 +19,44 @@ row_cust_data_free(RowCustData *row)
   free(row);
 }
 
+static void
+row_cust_data_remove(GtkButton      *button,
+                     GtkCheckButton *check)
+{
+  reamovedata *data = g_object_get_data (G_OBJECT(check),"data");
+  g_signal_handler_disconnect(data->slct,data->handler_id_slct);
+  g_signal_handler_disconnect(data->menu,data->handler_id_menu);
+  if(gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON (check)) == TRUE)
+    {
+      int         rc;
+      g_autofree gchar *sql;
+      char             *err_msg = 0;
+
+      sql = g_strdup_printf ("DELETE FROM customer WHERE id = %s;",data->data->id);
+      rc = sqlite3_exec (posman_window_get_db (data->win),sql,0,0,&err_msg);
+      if (rc != SQLITE_OK)
+        {
+      g_warning ("Failed to execute statement: %s\n", err_msg);
+      return;
+        }
+
+    }
+}
+
 GtkWidget *
 row_cust_data_create(gpointer item,
                      gpointer user_data)
 {
   GtkWidget     *row = GTK_WIDGET (item);
+  GtkWidget     *win = GTK_WIDGET (user_data);
   RowCustData   *data = g_object_get_data(G_OBJECT(row),"data");
 
-  GtkWidget   *grid,*label;
+  GtkWidget   *grid,*label,*check;
+  reamovedata *rdata = g_new (reamovedata, 1);
+  rdata->menu = posman_window_get_action_menu(POSMAN_WINDOW(win));
+  rdata->slct = posman_window_get_select_button(POSMAN_WINDOW (win));
+  rdata->data = data;
+  rdata->win  = POSMAN_WINDOW (win);
 
   grid = g_object_new (GTK_TYPE_GRID,
                        "visible", TRUE,
@@ -31,7 +72,21 @@ row_cust_data_create(gpointer item,
                         "hexpand", TRUE,
                         NULL);
 
+  check = g_object_new (GTK_TYPE_CHECK_BUTTON,
+                        NULL);
+  g_object_set_data(G_OBJECT (check),"data",rdata);
+
+  rdata->handler_id_menu =
+  g_signal_connect_swapped (rdata->menu, "remove_pressed",
+                            G_CALLBACK (gtk_widget_show),
+                            check);
+  rdata->handler_id_slct =
+  g_signal_connect (rdata->slct,"clicked",
+                    G_CALLBACK (row_cust_data_remove),
+                    check);
+
   gtk_grid_attach (GTK_GRID (grid), label, 0, 0, 1, 1);
+  gtk_grid_attach (GTK_GRID (grid), check, 1, 0, 1, 1);
   gtk_container_add (GTK_CONTAINER (row), grid);
   gtk_widget_show (row);
 

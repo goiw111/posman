@@ -113,6 +113,8 @@ posman_panel_list_dispose(GObject *object)
     g_object_unref(self->list_stor_cust);
   if (self->list_stor_cmnd)
     g_object_unref(self->list_stor_cmnd);
+  if (self->list_stor_domain)
+    g_object_unref(self->list_stor_domain);
 
   G_OBJECT_CLASS (posman_panel_list_parent_class)->dispose(object);
 }
@@ -300,7 +302,8 @@ posman_panel_list_set_model_cust(PosmanPanelList *self,
       gtk_list_box_bind_model(GTK_LIST_BOX (self->cust_listbox),
                               G_LIST_MODEL (self->list_stor_cust),
                               row_cust_data_create,
-                              NULL,NULL);
+                              gtk_widget_get_toplevel(GTK_WIDGET(self)),
+                              NULL);
 
   g_object_notify_by_pspec (G_OBJECT (self), properties[PROP_STOR_CUST]);
 }
@@ -383,4 +386,17 @@ posman_panel_list_get_description_textview_text(PosmanPanelList  *self)
   gtk_text_buffer_get_bounds (buffer, &start, &end);
 
   return gtk_text_buffer_get_text (buffer, &start, &end, FALSE);
+}
+
+void
+posman_panel_list_clear_add_cust(PosmanPanelList  *self)
+{
+  GtkTextBuffer   *buffer;
+
+  gtk_entry_set_text(GTK_ENTRY(self->name_entry),"");
+  gtk_entry_set_text(GTK_ENTRY(self->adress_entry),"");
+  gtk_entry_set_text(GTK_ENTRY(self->phone_entry),"");
+  gtk_combo_box_set_active_id(GTK_COMBO_BOX (self->domain_combobox),NULL);
+  buffer = gtk_text_view_get_buffer(GTK_TEXT_VIEW (self->description_textview));
+  gtk_text_buffer_set_text(buffer,"",-1);
 }

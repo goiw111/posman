@@ -240,6 +240,7 @@
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
                 <signal name="add_pressed" handler="add_pressed_cb" object="PosmanWindow" swapped="no"/>
+                <signal name="remove_pressed" handler="remove_pressed_cb" object="PosmanWindow" swapped="no"/>
                 <child>
                   <object class="GtkImage" id="menu_image">
                     <property name="visible">True</property>
@@ -260,7 +261,7 @@
               <object class="GtkButton" id="select_button">
                 <property name="can_focus">True</property>
                 <property name="receives_default">False</property>
-                <signal name="clicked" handler="select_pressed_cb" object="PosmanWindow" swapped="no"/>
+                <signal name="clicked" handler="select_pressed_cb" object="PosmanWindow" swapped="no" after="yes" />
                 <child>
                   <object class="GtkImage" id="select_image">
                     <property name="visible">True</property>

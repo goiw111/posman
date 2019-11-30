@@ -1,4 +1,3 @@
-
 #include "posman-config.h"
 #include "posman-window.h"
 #include "posman-panel-list.h"
@@ -13,8 +12,10 @@ struct _PosmanWindow
   /* Template widgets */
   GtkWidget             *previous_button;
   GtkWidget             *panel_list;
+
   GtkWidget             *action_menu;
   GtkWidget             *select_button;
+
   GtkWidget             *content_label;
   GtkWidget             *info_bar;
 
@@ -156,17 +157,19 @@ static void
 add_pressed_cb(PosmanActionMenu *menu,
                PosmanWindow     *self)
 {
-  PosmanPanelList   *list;
-  GtkListStore      *stor;
+  GtkWidget     *image;
+  GtkListStore  *list;
 
-  list = POSMAN_PANEL_LIST (self->panel_list);
-  stor = get_domains(self);
+  image = gtk_image_new_from_icon_name("list-add-symbolic",
+                                       GTK_ICON_SIZE_MENU);
 
-  posman_panel_list_set_model_domain (list, stor);
-  g_object_unref (stor);
+  list = get_domains (self);
+  posman_panel_list_set_model_domain (POSMAN_PANEL_LIST (self->panel_list),
+                                      list);
 
   posman_panel_list_set_view (POSMAN_PANEL_LIST (self->panel_list), posman_panel_list_add_cust);
 
+  gtk_button_set_image(GTK_BUTTON(self->select_button),image);
   gtk_widget_set_visible(GTK_WIDGET (menu),FALSE);
   gtk_widget_set_visible(GTK_WIDGET (self->select_button),TRUE);
 }
@@ -176,6 +179,10 @@ select_pressed_cb(GtkButton      *button,
                   PosmanWindow   *self)
 {
   PosmanPanelList       *list = POSMAN_PANEL_LIST (self->panel_list);
+
+  if(posman_panel_list_get_view (list) == posman_panel_list_add_cust)
+  {
+
   const gchar           *name,*phone,*adress,*domain_id;
   gchar                 *description;
 
@@ -221,6 +228,7 @@ select_pressed_cb(GtkButton      *button,
 
       gtk_label_set_text (GTK_LABEL (self->content_label), msg);
       gtk_widget_set_visible (self->info_bar, TRUE);
+      return;
     }
 
   sql = g_strdup_printf("INSERT INTO customer "
@@ -236,13 +244,15 @@ select_pressed_cb(GtkButton      *button,
       return;
     }
 
-  gtk_widget_set_visible(GTK_WIDGET (self->action_menu),TRUE);
-  gtk_widget_set_visible(GTK_WIDGET (self->select_button),FALSE);
-
-  posman_panel_list_set_view (POSMAN_PANEL_LIST (self->panel_list), posman_panel_list_main);
-
+    g_free(description);
+    posman_panel_list_clear_add_cust(list);
+}
+  if(posman_panel_list_get_view (list) == posman_panel_list_main)
+    {
+      gtk_widget_set_visible (self->select_button, FALSE);
+      gtk_widget_set_visible (self->action_menu, TRUE);
+    }
   posman_window_update_cust(self);
-  g_free(description);
 }
 
 static void
@@ -261,6 +271,33 @@ static void
 previous_button_clicked_cb(GtkButton *button,
                            PosmanWindow    *self)
 {
+
+  if(posman_panel_list_get_view (POSMAN_PANEL_LIST (self->panel_list)) ==
+     posman_panel_list_add_cust)
+    {
+      GtkWidget      *dialog;
+      GtkDialogFlags flags = GTK_DIALOG_DESTROY_WITH_PARENT;
+      dialog = gtk_message_dialog_new(GTK_WINDOW (self),flags,
+                                      GTK_MESSAGE_QUESTION,
+                                      GTK_BUTTONS_YES_NO,
+                                      "are you sure that you want to cancel");
+
+      int result = gtk_dialog_run (GTK_DIALOG (dialog));
+      switch (result)
+        {
+          case GTK_RESPONSE_YES:
+          posman_panel_list_clear_add_cust(POSMAN_PANEL_LIST (self->panel_list));
+          gtk_widget_destroy (dialog);
+          break;
+          default:
+          gtk_widget_destroy (dialog);
+          return;
+        }
+    }
+
+  gtk_widget_set_visible (self->select_button, FALSE);
+  gtk_widget_set_visible (self->action_menu, TRUE);
+
   posman_panel_list_set_view (POSMAN_PANEL_LIST (self->panel_list),
                               posman_panel_list_main);
 }
@@ -283,6 +320,20 @@ panel_list_row_activated_cb(PosmanPanelList   *list,
   g_object_unref (lstr);
 
   posman_panel_list_set_view (list, posman_panel_list_cust);
+}
+
+static void
+remove_pressed_cb(PosmanActionMenu *menu,
+                  PosmanWindow     *self)
+{
+  GtkWidget   *image;
+
+  image = gtk_image_new_from_icon_name("user-trash-symbolic",
+                                       GTK_ICON_SIZE_MENU);
+
+  gtk_button_set_image(GTK_BUTTON(self->select_button),image);
+  gtk_widget_set_visible(GTK_WIDGET (menu),FALSE);
+  gtk_widget_set_visible(GTK_WIDGET (self->select_button),TRUE);
 }
 /* object vfonc */
 
@@ -341,6 +392,7 @@ posman_window_class_init (PosmanWindowClass *klass)
   gtk_widget_class_bind_template_callback (widget_class, panel_list_row_activated_cb);
   gtk_widget_class_bind_template_callback (widget_class, add_pressed_cb);
   gtk_widget_class_bind_template_callback (widget_class, select_pressed_cb);
+  gtk_widget_class_bind_template_callback (widget_class, remove_pressed_cb);
 
   g_type_ensure(POSMAN_TYPE_PANEL_LIST);
   g_type_ensure(POSMAN_TYPE_ACTION_MENU);
@@ -353,4 +405,21 @@ posman_window_init (PosmanWindow *self)
   posman_window_init_database(self);
 }
 
+GtkWidget *
+posman_window_get_action_menu(PosmanWindow *self)
+{
+  return self->action_menu;
+}
+
+GtkWidget *
+posman_window_get_select_button(PosmanWindow *self)
+{
+  return self->select_button;
+}
+
+sqlite3 *
+posman_window_get_db (PosmanWindow *self)
+{
+  return self->db;
+}
 
