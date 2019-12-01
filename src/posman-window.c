@@ -228,6 +228,8 @@ select_pressed_cb(GtkButton      *button,
 
       gtk_label_set_text (GTK_LABEL (self->content_label), msg);
       gtk_widget_set_visible (self->info_bar, TRUE);
+      g_free(description);
+      posman_window_update_cust(self);
       return;
     }
 
