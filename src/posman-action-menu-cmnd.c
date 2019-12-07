@@ -1,11 +1,11 @@
-#include "posman-action-menu.h"
+#include "posman-action-menu-cmnd.h"
 
-struct _PosmanActionMenu
+struct _PosmanActionMenuCmnd
 {
   GtkMenuButton parent_instance;
 };
 
-G_DEFINE_TYPE (PosmanActionMenu, posman_action_menu, GTK_TYPE_MENU_BUTTON)
+G_DEFINE_TYPE (PosmanActionMenuCmnd, posman_action_menu_cmnd, GTK_TYPE_MENU_BUTTON)
 
 enum {
   PROP_0,
@@ -22,27 +22,27 @@ enum {
 static GParamSpec *properties [N_PROPS];
 static guint      menu_signals[LAST_SIGNAL];
 
-PosmanActionMenu *
-posman_action_menu_new (void)
+PosmanActionMenuCmnd *
+posman_action_menu_cmnd_new (void)
 {
-  return g_object_new (POSMAN_TYPE_ACTION_MENU, NULL);
+  return g_object_new (POSMAN_TYPE_ACTION_MENU_CMND, NULL);
 }
 
 static void
-posman_action_menu_finalize (GObject *object)
+posman_action_menu_cmnd_finalize (GObject *object)
 {
-  PosmanActionMenu *self = (PosmanActionMenu *)object;
+  PosmanActionMenuCmnd *self = (PosmanActionMenuCmnd *)object;
 
-  G_OBJECT_CLASS (posman_action_menu_parent_class)->finalize (object);
+  G_OBJECT_CLASS (posman_action_menu_cmnd_parent_class)->finalize (object);
 }
 
 static void
-posman_action_menu_get_property (GObject    *object,
-                                 guint       prop_id,
-                                 GValue     *value,
-                                 GParamSpec *pspec)
+posman_action_menu_cmnd_get_property (GObject    *object,
+                                      guint       prop_id,
+                                      GValue     *value,
+                                      GParamSpec *pspec)
 {
-  PosmanActionMenu *self = POSMAN_ACTION_MENU (object);
+  PosmanActionMenuCmnd *self = POSMAN_ACTION_MENU_CMND (object);
 
   switch (prop_id)
     {
@@ -52,12 +52,12 @@ posman_action_menu_get_property (GObject    *object,
 }
 
 static void
-posman_action_menu_set_property (GObject      *object,
-                                 guint         prop_id,
-                                 const GValue *value,
-                                 GParamSpec   *pspec)
+posman_action_menu_cmnd_set_property (GObject      *object,
+                                      guint         prop_id,
+                                      const GValue *value,
+                                      GParamSpec   *pspec)
 {
-  PosmanActionMenu *self = POSMAN_ACTION_MENU (object);
+  PosmanActionMenuCmnd *self = POSMAN_ACTION_MENU_CMND (object);
 
   switch (prop_id)
     {
@@ -67,29 +67,17 @@ posman_action_menu_set_property (GObject      *object,
 }
 
 static void
-posman_real_action_menu_add_pressed(PosmanActionMenu *self)
-{
-  g_print("add\n");
-}
-
-static void
-posman_real_action_menu_remove_pressed(PosmanActionMenu *self)
-{
-  g_print("remove\n");
-}
-
-static void
-posman_action_menu_class_init (PosmanActionMenuClass *klass)
+posman_action_menu_cmnd_class_init (PosmanActionMenuCmndClass *klass)
 {
   GObjectClass *object_class = G_OBJECT_CLASS (klass);
   GtkWidgetClass *widget_class = GTK_WIDGET_CLASS (klass);
 
-  object_class->finalize = posman_action_menu_finalize;
-  object_class->get_property = posman_action_menu_get_property;
-  object_class->set_property = posman_action_menu_set_property;
 
+  object_class->finalize = posman_action_menu_cmnd_finalize;
+  object_class->get_property = posman_action_menu_cmnd_get_property;
+  object_class->set_property = posman_action_menu_cmnd_set_property;
 
-  gtk_widget_class_set_template_from_resource (widget_class, "/org/pos/manager/posman-action-menu.ui");
+  gtk_widget_class_set_template_from_resource (widget_class, "/org/pos/manager/posman-action-menu-cmnd.ui");
 
   menu_signals[ADD_PRESSED] = g_signal_new("add_pressed",
                               G_OBJECT_CLASS_TYPE (object_class),
@@ -109,31 +97,31 @@ posman_action_menu_class_init (PosmanActionMenuClass *klass)
 }
 
 static void
-posman_action_menu_add_activate(GSimpleAction     *simple,
+posman_action_menu_cmnd_add_activate(GSimpleAction     *simple,
                                 GVariant          *parameter,
                                 gpointer          user_data)
 {
-  PosmanActionMenu *menu = POSMAN_ACTION_MENU (user_data);
+  PosmanActionMenuCmnd *menu = POSMAN_ACTION_MENU_CMND (user_data);
 
   g_signal_emit (menu, menu_signals[ADD_PRESSED],0);
 }
 
 static void
-posman_action_menu_remove_activate(GSimpleAction    *simple,
+posman_action_menu_cmnd_remove_activate(GSimpleAction    *simple,
                                    GVariant         *parameter,
                                    gpointer         user_data)
 {
-  PosmanActionMenu *menu = POSMAN_ACTION_MENU (user_data);
+  PosmanActionMenuCmnd *menu = POSMAN_ACTION_MENU_CMND (user_data);
 
   g_signal_emit (menu, menu_signals[REMOVE_PRESSED],0);
 }
 
 static void
-posman_action_menu_init (PosmanActionMenu *self)
+posman_action_menu_cmnd_init (PosmanActionMenuCmnd *self)
 {
   const GActionEntry entries[] = {
-    { "add",    posman_action_menu_add_activate   },
-    { "remove", posman_action_menu_remove_activate}
+    { "add",    posman_action_menu_cmnd_add_activate   },
+    { "remove", posman_action_menu_cmnd_remove_activate}
   };
   GSimpleActionGroup *group;
 

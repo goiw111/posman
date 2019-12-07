@@ -3,6 +3,9 @@
 #include <glib-object.h>
 #include <gtk/gtk.h>
 #include <sqlite3.h>
+#include "posman-action-menu-cust.h"
+#include "posman-action-menu-cmnd.h"
+#include "posman-panel-row-cust.h"
 G_BEGIN_DECLS
 
 typedef enum{
@@ -28,25 +31,12 @@ posman_panel_list_set_view(PosmanPanelList *self,
                            posmanpanellistview view);
 
 void
-posman_panel_list_set_model_cust(PosmanPanelList *self,
-                                 GObject         *list_stor);
-void
-posman_panel_list_set_model_cmnd(PosmanPanelList *self,
-                                 GObject         *list_stor);
-void
-posman_panel_list_set_model_domain(PosmanPanelList  *self,
-                                   GtkListStore     *list_stor);
+posman_panel_list_remove_row_cust(PosmanPanelList     *self,
+                                  PosmanPanelRowCust  *row);
 
-const gchar *
-posman_panel_list_get_name_entry_text(PosmanPanelList  *self);
-const gchar *
-posman_panel_list_get_adress_entry_text(PosmanPanelList  *self);
-const gchar *
-posman_panel_list_get_phone_entry_text(PosmanPanelList  *self);
-const gchar *
-posman_panel_list_get_domain_combobox_id(PosmanPanelList  *self);
-gchar *
-posman_panel_list_get_description_textview_text(PosmanPanelList  *self);
 void
-posman_panel_list_clear_add_cust(PosmanPanelList  *self);
+posman_panel_list_set_list_stor_cust(PosmanPanelList *self,
+                                     GObject         *list_stor);
+
+
 G_END_DECLS

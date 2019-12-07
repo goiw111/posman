@@ -2,8 +2,9 @@ posman_sources = [
   'main.c',
   'posman-window.c',
   'posman-panel-list.c',
-  'posman-list-box-data.c',
-  'posman-action-menu.c',
+  'posman-action-menu-cust.c',
+  'posman-action-menu-cmnd.c',
+  'posman-panel-row-cust.c',
 ]
 
 sqlite_required = '3.27.2'

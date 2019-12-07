@@ -1,5 +1,7 @@
 #include "posman-panel-list.h"
-#include "posman-list-box-data.h"
+#include "posman-action-menu-cust.h"
+#include "posman-action-menu-cmnd.h"
+#include "posman-panel-row-cust.h"
 #include <sqlite3.h>
 
 struct _PosmanPanelList
@@ -15,6 +17,10 @@ struct _PosmanPanelList
   GObject                   *list_stor_cust;
   GObject                   *list_stor_cmnd;
   GtkWidget                 *list_stor_domain;
+
+  GtkWidget                 *menu_cust;
+  GtkWidget                 *menu_cmnd;
+  GtkWidget                 *slct_add_cust;
 
   GtkWidget                 *name_entry;
   GtkWidget                 *adress_entry;
@@ -33,6 +39,9 @@ enum {
   PROP_STOR_CUST,
   PROP_STOR_CMND,
   PROP_STOR_DOMAIN,
+  PROP_MENU_CUST,
+  PROP_MENU_CMND,
+  PROP_SLCT_ADD,
   N_PROPS
 };
 
@@ -120,6 +129,14 @@ posman_panel_list_dispose(GObject *object)
 }
 
 static void
+posman_panel_list_constracted(GObject *object)
+{
+  PosmanPanelList *self = (PosmanPanelList*)object;
+
+  G_OBJECT_CLASS (posman_panel_list_parent_class)->constructed(object);
+}
+
+static void
 posman_panel_list_get_property (GObject    *object,
                                 guint       prop_id,
                                 GValue     *value,
@@ -149,18 +166,13 @@ posman_panel_list_set_property (GObject      *object,
     {
       case PROP_VIEW:
         posman_panel_list_set_view (self, g_value_get_int (value));
-        break;
-
-      case PROP_STOR_CUST:
-        posman_panel_list_set_model_cust(self, g_value_get_object(value));
-        break;
-
-      case PROP_STOR_CMND:
-        posman_panel_list_set_model_cmnd(self, g_value_get_object(value));
-        break;
+      break;
       case PROP_STOR_DOMAIN:
-        posman_panel_list_set_model_domain(self,g_value_get_object(value));
-        break;
+        /*posman_panel_list_set_model_domain(self,g_value_get_object(value));*/
+      break;
+      case PROP_STOR_CUST:
+        posman_panel_list_set_list_stor_cust(self,g_value_get_object(value));
+      break;
 
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
@@ -201,6 +213,7 @@ posman_panel_list_class_init (PosmanPanelListClass *klass)
 
   object_class->finalize = posman_panel_list_finalize;
   object_class->dispose  = posman_panel_list_dispose;
+  object_class->constructed = posman_panel_list_constracted;
   object_class->get_property = posman_panel_list_get_property;
   object_class->set_property = posman_panel_list_set_property;
 
@@ -234,6 +247,27 @@ posman_panel_list_class_init (PosmanPanelListClass *klass)
                       GTK_TYPE_LIST_STORE,
                       G_PARAM_READWRITE | G_PARAM_EXPLICIT_NOTIFY);
 
+  properties[PROP_MENU_CUST] =
+  g_param_spec_object("menu-cust",
+                      "action-menu-cust",
+                      "action menu for add and remove cust data",
+                      POSMAN_TYPE_ACTION_MENU_CUST,
+                      G_PARAM_READWRITE | G_PARAM_EXPLICIT_NOTIFY);
+
+  properties[PROP_MENU_CMND] =
+  g_param_spec_object("menu-cmnd",
+                      "action-menu-cmnd",
+                      "action menu for add and remove cmnd data",
+                      POSMAN_TYPE_ACTION_MENU_CMND,
+                      G_PARAM_READWRITE | G_PARAM_EXPLICIT_NOTIFY);
+
+  properties[PROP_SLCT_ADD] =
+  g_param_spec_object("slct-add",
+                      "selecte-add-cust",
+                      "add customer with click",
+                      GTK_TYPE_BUTTON,
+                      G_PARAM_READWRITE | G_PARAM_EXPLICIT_NOTIFY);
+
   g_object_class_install_properties (object_class, N_PROPS, properties);
 
   signals[ROW_ACTIVATED] =
@@ -255,6 +289,12 @@ posman_panel_list_init (PosmanPanelList *self)
   gtk_widget_init_template (GTK_WIDGET (self));
 }
 
+posmanpanellistview
+posman_panel_list_get_view(PosmanPanelList *self)
+{
+  return self->view;
+}
+
 void
 posman_panel_list_set_view(PosmanPanelList *self,
                             posmanpanellistview view)
@@ -268,69 +308,25 @@ posman_panel_list_set_view(PosmanPanelList *self,
 
   self->view = view;
 
-  gtk_stack_set_transition_type(GTK_STACK (self), crossfade ? GTK_STACK_TRANSITION_TYPE_CROSSFADE : GTK_STACK_TRANSITION_TYPE_SLIDE_LEFT_RIGHT);
+  gtk_stack_set_transition_type(GTK_STACK (self),
+                                crossfade ? GTK_STACK_TRANSITION_TYPE_CROSSFADE : GTK_STACK_TRANSITION_TYPE_SLIDE_LEFT_RIGHT);
 
   gtk_stack_set_visible_child (GTK_STACK (self),
                                get_listbox_from_view (self, view));
 
   g_object_notify_by_pspec (G_OBJECT (self),
                             properties[PROP_VIEW]);
-
-}
-
-posmanpanellistview
-posman_panel_list_get_view(PosmanPanelList *self)
-{
-  g_return_val_if_fail (POSMAN_IS_PANEL_LIST (self), -1);
-  return self->view;
 }
 
 void
-posman_panel_list_set_model_cust(PosmanPanelList *self,
-                                 GObject         *list_stor)
+posman_panel_list_remove_row_cust(PosmanPanelList     *self,
+                                  PosmanPanelRowCust  *row)
 {
-  g_return_if_fail (POSMAN_IS_PANEL_LIST (self));
-  g_return_if_fail (list_stor == NULL || G_IS_OBJECT (list_stor));
-
-  if (self->list_stor_cust)
-    g_object_unref(self->list_stor_cust);
-
-
-  self->list_stor_cust = g_object_ref (list_stor);
-
-  if (self->list_stor_cust)
-      gtk_list_box_bind_model(GTK_LIST_BOX (self->cust_listbox),
-                              G_LIST_MODEL (self->list_stor_cust),
-                              row_cust_data_create,
-                              gtk_widget_get_toplevel(GTK_WIDGET(self)),
-                              NULL);
-
-  g_object_notify_by_pspec (G_OBJECT (self), properties[PROP_STOR_CUST]);
+  gtk_container_remove(GTK_CONTAINER (self->cust_listbox),
+                       GTK_WIDGET (row));
 }
 
-void
-posman_panel_list_set_model_cmnd(PosmanPanelList *self,
-                                 GObject         *list_stor)
-{
-  g_return_if_fail (POSMAN_IS_PANEL_LIST (self));
-  g_return_if_fail (list_stor == NULL || G_IS_OBJECT (list_stor));
-
-  if (self->list_stor_cmnd)
-    g_object_unref(self->list_stor_cmnd);
-
-  self->list_stor_cmnd = g_object_ref (list_stor);
-
-  if (self->list_stor_cmnd)
-      gtk_list_box_bind_model(GTK_LIST_BOX (self->cmnd_listbox),
-                              G_LIST_MODEL (self->list_stor_cmnd),
-                              row_cmnd_data_create,
-                              NULL,NULL);
-
-
-  g_object_notify_by_pspec (G_OBJECT (self), properties[PROP_STOR_CMND]);
-}
-
-void
+/*void
 posman_panel_list_set_model_domain(PosmanPanelList  *self,
                                    GtkListStore     *list_stor)
 {
@@ -346,57 +342,34 @@ posman_panel_list_set_model_domain(PosmanPanelList  *self,
                             GTK_TREE_MODEL (list_stor));
 
   g_object_notify_by_pspec (G_OBJECT (self), properties[PROP_STOR_DOMAIN]);
-}
+}*/
 
-const gchar *
-posman_panel_list_get_name_entry_text(PosmanPanelList  *self)
+static GtkWidget *
+create_widget_func(gpointer item,
+                   gpointer user_data)
 {
+  GtkWidget  *row = (GtkWidget*)item;
 
-  return gtk_entry_get_text (GTK_ENTRY (self->name_entry));
-}
-
-const gchar *
-posman_panel_list_get_adress_entry_text(PosmanPanelList  *self)
-{
-
-  return gtk_entry_get_text (GTK_ENTRY (self->adress_entry));
-}
-
-const gchar *
-posman_panel_list_get_phone_entry_text(PosmanPanelList  *self)
-{
-
-  return gtk_entry_get_text (GTK_ENTRY (self->phone_entry));
-}
-
-const gchar *
-posman_panel_list_get_domain_combobox_id(PosmanPanelList  *self)
-{
-
-  return gtk_combo_box_get_active_id (GTK_COMBO_BOX (self->domain_combobox));
-}
-
-gchar *
-posman_panel_list_get_description_textview_text(PosmanPanelList  *self)
-{
-  GtkTextIter start, end;
-  GtkTextBuffer *buffer =
-  gtk_text_view_get_buffer (GTK_TEXT_VIEW (self->description_textview));
-
-  gtk_text_buffer_get_bounds (buffer, &start, &end);
-
-  return gtk_text_buffer_get_text (buffer, &start, &end, FALSE);
+  return row;
 }
 
 void
-posman_panel_list_clear_add_cust(PosmanPanelList  *self)
+posman_panel_list_set_list_stor_cust(PosmanPanelList *self,
+                                     GObject         *list_stor)
 {
-  GtkTextBuffer   *buffer;
+  g_return_if_fail (POSMAN_IS_PANEL_LIST (self));
+  g_return_if_fail (list_stor == NULL || G_IS_LIST_STORE (list_stor));
 
-  gtk_entry_set_text(GTK_ENTRY(self->name_entry),"");
-  gtk_entry_set_text(GTK_ENTRY(self->adress_entry),"");
-  gtk_entry_set_text(GTK_ENTRY(self->phone_entry),"");
-  gtk_combo_box_set_active_id(GTK_COMBO_BOX (self->domain_combobox),NULL);
-  buffer = gtk_text_view_get_buffer(GTK_TEXT_VIEW (self->description_textview));
-  gtk_text_buffer_set_text(buffer,"",-1);
+  if (self->list_stor_cust)
+    g_object_unref(self->list_stor_cust);
+
+  self->list_stor_cust = g_object_ref (list_stor);
+
+  if(self->list_stor_cust)
+    gtk_list_box_bind_model (GTK_LIST_BOX (self->cust_listbox),
+                             G_LIST_MODEL (list_stor),
+                             create_widget_func,
+                             NULL,NULL);
+
+  g_object_notify_by_pspec (G_OBJECT (self), properties[PROP_STOR_CUST]);
 }

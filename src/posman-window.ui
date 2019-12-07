@@ -125,7 +125,6 @@
                   <property name="visible">True</property>
                   <property name="can_focus">True</property>
                   <signal name="notify::view" handler="panel_list_view_changed_cb" object="PosmanWindow" swapped="no" />
-                  <signal name="row-activated" handler="panel_list_row_activated_cb" object="PosmanWindow" swapped="no" />
                 </object>
               </child>
                   </object>
@@ -197,7 +196,6 @@
                 <property name="can_focus">True</property>
                 <property name="receives_default">True</property>
                 <property name="no_show_all">True</property>
-                <signal name="clicked" handler="previous_button_clicked_cb" object="PosmanWindow" swapped="no"/>
                 <child>
                   <object class="GtkImage">
                     <property name="visible">True</property>
@@ -236,13 +234,31 @@
               </packing>
             </child>
             <child>
-              <object class="PosmanActionMenu" id="action_menu">
+              <object class="PosmanActionMenuCust" id="action_menu_cust">
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
-                <signal name="add_pressed" handler="add_pressed_cb" object="PosmanWindow" swapped="no"/>
-                <signal name="remove_pressed" handler="remove_pressed_cb" object="PosmanWindow" swapped="no"/>
                 <child>
-                  <object class="GtkImage" id="menu_image">
+                  <object class="GtkImage">
+                    <property name="visible">True</property>
+                    <property name="can_focus">False</property>
+                    <property name="icon_name">open-menu-symbolic</property>
+                  </object>
+                </child>
+                <style>
+                  <class name="image-button"/>
+                </style>
+              </object>
+              <packing>
+                <property name="pack_type">end</property>
+                <property name="position">3</property>
+              </packing>
+            </child>
+            <child>
+              <object class="PosmanActionMenuCmnd" id="action_menu_cmnd">
+                <property name="visible">True</property>
+                <property name="can_focus">True</property>
+                <child>
+                  <object class="GtkImage">
                     <property name="visible">True</property>
                     <property name="can_focus">False</property>
                     <property name="icon_name">open-menu-symbolic</property>
@@ -261,9 +277,8 @@
               <object class="GtkButton" id="select_button">
                 <property name="can_focus">True</property>
                 <property name="receives_default">False</property>
-                <signal name="clicked" handler="select_pressed_cb" object="PosmanWindow" swapped="no" after="yes" />
                 <child>
-                  <object class="GtkImage" id="select_image">
+                  <object class="GtkImage">
                     <property name="visible">True</property>
                     <property name="can_focus">False</property>
                     <property name="icon_name">object-select-symbolic</property>

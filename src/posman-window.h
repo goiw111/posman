@@ -10,10 +10,18 @@ G_BEGIN_DECLS
 
 G_DECLARE_FINAL_TYPE (PosmanWindow, posman_window, POSMAN, WINDOW, GtkApplicationWindow)
 
+void
+posman_window_remove_cust_with_id(PosmanWindow *self, gint64  id);
+
+
 GtkWidget *
-posman_window_get_action_menu(PosmanWindow *self);
+posman_window_get_action_menu_cust(PosmanWindow *self);
 GtkWidget *
 posman_window_get_select_button(PosmanWindow *self);
+GtkWidget *
+posman_window_get_remove_button(PosmanWindow *self);
+GtkWidget *
+posman_window_get_panel_list(PosmanWindow *self);
 sqlite3 *
 posman_window_get_db (PosmanWindow *self);
 

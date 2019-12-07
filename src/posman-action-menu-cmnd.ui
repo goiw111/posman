@@ -43,7 +43,7 @@
       </packing>
     </child>
   </object>
-  <template class="PosmanActionMenu" parent="GtkMenuButton">
+  <template class="PosmanActionMenuCmnd" parent="GtkMenuButton">
     <property name="visible">True</property>
     <property name="can_focus">True</property>
     <property name="receives_default">False</property>
@@ -73,7 +73,7 @@
         <property name="visible">True</property>
         <property name="can_focus">False</property>
         <property name="xalign">0</property>
-        <property name="label" translatable="yes">add</property>
+        <property name="label" translatable="yes">add command</property>
       </object>
       <packing>
         <property name="expand">False</property>
@@ -103,7 +103,7 @@
         <property name="visible">True</property>
         <property name="can_focus">False</property>
         <property name="xalign">0</property>
-        <property name="label" translatable="yes">remove</property>
+        <property name="label" translatable="yes">remove command</property>
       </object>
       <packing>
         <property name="expand">False</property>
