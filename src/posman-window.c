@@ -15,6 +15,7 @@ struct _PosmanWindow
   GtkWidget             *panel_list;
 
   GtkWidget             *action_menu_cust;
+  GtkWidget             *action_menu_cmnd;
   GtkWidget             *select_button;
 
   GtkWidget             *content_label;
@@ -79,10 +80,17 @@ panel_list_view_changed_cb (PosmanPanelList *panel_list,
                                  PosmanWindow    *self)
 {
   gboolean is_main_view;
+  gboolean is_cust_view;
+  gboolean is_addc_view;
 
   is_main_view = posman_panel_list_get_view (panel_list) == posman_panel_list_main;
+  is_cust_view = posman_panel_list_get_view (panel_list) == posman_panel_list_cust;
+  is_addc_view = posman_panel_list_get_view (panel_list) == posman_panel_list_add_cust;
 
   gtk_widget_set_visible (self->previous_button, !is_main_view);
+  gtk_widget_set_visible (self->select_button, is_addc_view);
+  gtk_widget_set_visible (self->action_menu_cust, is_main_view);
+  gtk_widget_set_visible (self->action_menu_cmnd, is_cust_view);
 }
 
 /* object vfonc */
@@ -105,13 +113,60 @@ remove_cust(GSimpleAction *simple,
                                      g_variant_get_int64(parameter));
 }
 
+static void
+show_add_cust(GSimpleAction *simple,
+         GVariant      *parameter,
+         gpointer       user_data)
+{
+  PosmanWindow    *self = POSMAN_WINDOW (user_data);
+
+  posman_panel_list_set_view(POSMAN_PANEL_LIST (self->panel_list),posman_panel_list_add_cust);
+
+}
+
+static void
+previous_button_pressed(GSimpleAction *simple,
+         GVariant      *parameter,
+         gpointer       user_data)
+{
+  PosmanWindow    *self = POSMAN_WINDOW (user_data);
+
+  posman_panel_list_set_view(POSMAN_PANEL_LIST (self->panel_list),posman_panel_list_main);
+
+}
+static void
+save_button_pressed(GSimpleAction *simple,
+         GVariant      *parameter,
+         gpointer       user_data)
+{
+  PosmanWindow    *self = POSMAN_WINDOW (user_data);
+
+  posman_panel_list_set_view(POSMAN_PANEL_LIST (self->panel_list),posman_panel_list_main);
+
+}
+
+static void
+list_box_row_activated(GSimpleAction *simple,
+         GVariant      *parameter,
+         gpointer       user_data)
+{
+  PosmanWindow    *self = POSMAN_WINDOW (user_data);
+
+  posman_panel_list_set_view(POSMAN_PANEL_LIST (self->panel_list),posman_panel_list_cust);
+
+}
+
 
 static GActionGroup *
 create_action_group (PosmanWindow *self)
 {
   GSimpleActionGroup *group;
   const GActionEntry entries[] = {
-    { "removecust",remove_cust,"x"    },
+    { "removecust"      ,remove_cust           ,"x"},
+    { "showaddcust"     ,show_add_cust          },
+    { "previouspressed" ,previous_button_pressed},
+    { "savepressed"     ,save_button_pressed    },
+    { "rowactivated"    ,list_box_row_activated,"x"}
   };
 
   group = g_simple_action_group_new ();
@@ -203,6 +258,7 @@ posman_window_class_init (PosmanWindowClass *klass)
   gtk_widget_class_bind_template_child (widget_class, PosmanWindow, previous_button);
   gtk_widget_class_bind_template_child (widget_class, PosmanWindow, panel_list);
   gtk_widget_class_bind_template_child (widget_class, PosmanWindow, action_menu_cust);
+  gtk_widget_class_bind_template_child (widget_class, PosmanWindow, action_menu_cmnd);
   gtk_widget_class_bind_template_child (widget_class, PosmanWindow, select_button);
   gtk_widget_class_bind_template_child (widget_class, PosmanWindow, content_label);
   gtk_widget_class_bind_template_child (widget_class, PosmanWindow, info_bar);

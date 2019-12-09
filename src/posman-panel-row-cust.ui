@@ -34,6 +34,7 @@
   <template class="PosmanPanelRowCust" parent="GtkListBoxRow">
     <property name="visible">True</property>
     <property name="can_focus">False</property>
+    <property name="action-name">win.rowactivated</property>
     <child>
       <object class="GtkGrid">
         <property name="visible">True</property>

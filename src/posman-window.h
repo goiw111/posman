@@ -12,7 +12,10 @@ G_DECLARE_FINAL_TYPE (PosmanWindow, posman_window, POSMAN, WINDOW, GtkApplicatio
 
 void
 posman_window_remove_cust_with_id(PosmanWindow *self, gint64  id);
-
+void
+posman_window_get_cmnd_cust_with_id(PosmanWindow *self, gint64  id);
+void
+posman_window_add_cust(PosmanWindow *self);
 
 GtkWidget *
 posman_window_get_action_menu_cust(PosmanWindow *self);

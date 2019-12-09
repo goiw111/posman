@@ -143,6 +143,8 @@ posman_panel_row_cust_set_id(PosmanPanelRowCust *self,gint64 id)
   if (self->id)
   gtk_actionable_set_action_target(GTK_ACTIONABLE (self->remove_button),
                                    "x",self->id);
+  gtk_actionable_set_action_target(GTK_ACTIONABLE (self),
+                                   "x",self->id);
   g_object_notify_by_pspec (G_OBJECT (self), properties[PROP_ID]);
 }
 gint64
