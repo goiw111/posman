@@ -39,19 +39,9 @@ enum {
   PROP_STOR_CUST,
   PROP_STOR_CMND,
   PROP_STOR_DOMAIN,
-  PROP_MENU_CUST,
-  PROP_MENU_CMND,
-  PROP_SLCT_ADD,
   N_PROPS
 };
-
-enum {
-  ROW_ACTIVATED,
-  LAST_SIGNAL
-};
-
 static GParamSpec *properties [N_PROPS] = { NULL, };
-static guint signals[LAST_SIGNAL] = { 0 };
 
 /*
  * Auxiliary methods
@@ -82,21 +72,7 @@ get_listbox_from_view(PosmanPanelList     *self,
 
 /*callback*/
 
-static void
-cmnd_row_activated_cb(GtkListBox      *box,
-                      GtkListBoxRow   *row,
-                      PosmanPanelList *self)
-{
 
-}
-
-static void
-cust_row_activated_cb(GtkListBox      *box,
-                      GtkListBoxRow   *row,
-                      PosmanPanelList *self)
-{
-  g_signal_emit (self, signals[ROW_ACTIVATED], 0, box, row);
-}
 /*object*/
 
 PosmanPanelList *
@@ -206,11 +182,6 @@ posman_panel_list_class_init (PosmanPanelListClass *klass)
   gtk_widget_class_bind_template_child (widget_class,PosmanPanelList,
                                         description_textview);
 
-  gtk_widget_class_bind_template_callback (widget_class,
-                                           cmnd_row_activated_cb);
-  gtk_widget_class_bind_template_callback (widget_class,
-                                           cust_row_activated_cb);
-
   object_class->finalize = posman_panel_list_finalize;
   object_class->dispose  = posman_panel_list_dispose;
   object_class->constructed = posman_panel_list_constracted;
@@ -247,39 +218,7 @@ posman_panel_list_class_init (PosmanPanelListClass *klass)
                       GTK_TYPE_LIST_STORE,
                       G_PARAM_READWRITE | G_PARAM_EXPLICIT_NOTIFY);
 
-  properties[PROP_MENU_CUST] =
-  g_param_spec_object("menu-cust",
-                      "action-menu-cust",
-                      "action menu for add and remove cust data",
-                      POSMAN_TYPE_ACTION_MENU_CUST,
-                      G_PARAM_READWRITE | G_PARAM_EXPLICIT_NOTIFY);
-
-  properties[PROP_MENU_CMND] =
-  g_param_spec_object("menu-cmnd",
-                      "action-menu-cmnd",
-                      "action menu for add and remove cmnd data",
-                      POSMAN_TYPE_ACTION_MENU_CMND,
-                      G_PARAM_READWRITE | G_PARAM_EXPLICIT_NOTIFY);
-
-  properties[PROP_SLCT_ADD] =
-  g_param_spec_object("slct-add",
-                      "selecte-add-cust",
-                      "add customer with click",
-                      GTK_TYPE_BUTTON,
-                      G_PARAM_READWRITE | G_PARAM_EXPLICIT_NOTIFY);
-
   g_object_class_install_properties (object_class, N_PROPS, properties);
-
-  signals[ROW_ACTIVATED] =
-    g_signal_new ("row-activated",
-                  G_TYPE_FROM_CLASS (object_class),
-                  G_SIGNAL_RUN_LAST,
-                  0,
-                  NULL, NULL,
-                  NULL,
-                  G_TYPE_NONE, 2,
-                  GTK_TYPE_LIST_BOX,
-                  GTK_TYPE_LIST_BOX_ROW);
 
 }
 
@@ -326,7 +265,7 @@ posman_panel_list_remove_row_cust(PosmanPanelList     *self,
                        GTK_WIDGET (row));
 }
 
-/*void
+void
 posman_panel_list_set_model_domain(PosmanPanelList  *self,
                                    GtkListStore     *list_stor)
 {
@@ -342,7 +281,7 @@ posman_panel_list_set_model_domain(PosmanPanelList  *self,
                             GTK_TREE_MODEL (list_stor));
 
   g_object_notify_by_pspec (G_OBJECT (self), properties[PROP_STOR_DOMAIN]);
-}*/
+}
 
 static GtkWidget *
 create_widget_func(gpointer item,
@@ -372,4 +311,26 @@ posman_panel_list_set_list_stor_cust(PosmanPanelList *self,
                              NULL,NULL);
 
   g_object_notify_by_pspec (G_OBJECT (self), properties[PROP_STOR_CUST]);
+}
+
+gboolean
+posman_panel_list_is_add_cust_in_prog(PosmanPanelList *self)
+{
+  gboolean        in_prog;
+  GtkEntryBuffer   *buffer;
+  buffer  = gtk_entry_get_buffer (GTK_ENTRY (self->name_entry));
+  in_prog = gtk_entry_buffer_get_length(buffer) > 0;
+  return in_prog;
+}
+
+void
+posman_panel_list_clear_add_cust(PosmanPanelList *self)
+{
+  gtk_entry_set_text(GTK_ENTRY(self->name_entry),"");
+  gtk_entry_set_text(GTK_ENTRY(self->adress_entry),"");
+  gtk_entry_set_text(GTK_ENTRY(self->phone_entry),"");
+  gtk_combo_box_set_active(GTK_COMBO_BOX (self->domain_combobox),-1);
+  gtk_text_buffer_set_text(gtk_text_view_get_buffer (GTK_TEXT_VIEW (self->description_textview)),
+                           "",
+                           -1);
 }

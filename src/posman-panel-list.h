@@ -38,5 +38,9 @@ void
 posman_panel_list_set_list_stor_cust(PosmanPanelList *self,
                                      GObject         *list_stor);
 
+gboolean
+posman_panel_list_is_add_cust_in_prog(PosmanPanelList *self);
+void
+posman_panel_list_clear_add_cust(PosmanPanelList *self);
 
 G_END_DECLS

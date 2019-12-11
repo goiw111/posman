@@ -68,11 +68,6 @@ posman_window_init_database(PosmanWindow *self)
 }
 
 /* callback */
-static void
-previous_button_clicked_cb()
-{
-
-}
 
 static void
 panel_list_view_changed_cb (PosmanPanelList *panel_list,
@@ -131,6 +126,22 @@ previous_button_pressed(GSimpleAction *simple,
 {
   PosmanWindow    *self = POSMAN_WINDOW (user_data);
 
+  if(posman_panel_list_is_add_cust_in_prog(POSMAN_PANEL_LIST(self->panel_list)))
+    {
+      GtkWidget       *dialog;
+      int             result;
+      GtkDialogFlags  flags = GTK_DIALOG_DESTROY_WITH_PARENT;
+      dialog = gtk_message_dialog_new (GTK_WINDOW (self),
+                                 flags,
+                                 GTK_MESSAGE_WARNING,
+                                 GTK_BUTTONS_YES_NO,
+                                 "are you sure that you want to cancel");
+      result = gtk_dialog_run (GTK_DIALOG (dialog));
+      gtk_widget_destroy (dialog);
+      if(result == GTK_RESPONSE_NO)
+        return;
+    }
+  posman_panel_list_clear_add_cust(POSMAN_PANEL_LIST (self->panel_list));
   posman_panel_list_set_view(POSMAN_PANEL_LIST (self->panel_list),posman_panel_list_main);
 
 }
@@ -264,7 +275,6 @@ posman_window_class_init (PosmanWindowClass *klass)
   gtk_widget_class_bind_template_child (widget_class, PosmanWindow, info_bar);
 
   gtk_widget_class_bind_template_callback (widget_class, panel_list_view_changed_cb);
-  gtk_widget_class_bind_template_callback (widget_class, previous_button_clicked_cb);
   /*gtk_widget_class_bind_template_callback (widget_class, panel_list_row_activated_cb);
   gtk_widget_class_bind_template_callback (widget_class, add_pressed_cb);
   gtk_widget_class_bind_template_callback (widget_class, select_pressed_cb);
