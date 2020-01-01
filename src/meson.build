@@ -5,15 +5,15 @@ posman_sources = [
   'posman-action-menu-cust.c',
   'posman-action-menu-cmnd.c',
   'posman-panel-row-cust.c',
+  'posman-action-area.c',
 ]
-
-sqlite_required = '3.27.2'
 
 posman_deps = [
   dependency('gio-2.0', version: '>= 2.50'),
   dependency('glib-2.0', version: '>= 2.58'),
   dependency('gtk+-3.0', version: '>= 3.24'),
   dependency('sqlite3', version: '>= 3.27.2'),
+  dependency('gdk-pixbuf-2.0', version: '>= 2.38.1'),
 ]
 
 gnome = import('gnome')

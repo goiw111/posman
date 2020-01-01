@@ -6,5 +6,8 @@
     <file>posman-action-menu-cust.ui</file>
     <file>posman-action-menu-cmnd.ui</file>
     <file>posman-panel-row-cust.ui</file>
+    <file>posman-action-area.ui</file>
+    <file>data/box.png</file>
+    <file>data/boxes.png</file>
   </gresource>
 </gresources>

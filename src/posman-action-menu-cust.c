@@ -13,10 +13,6 @@ enum {
   N_PROPS
 };
 
-enum {
-  LAST_SIGNAL
-};
-
 static GParamSpec *properties [N_PROPS];
 
 PosmanActionMenuCust *

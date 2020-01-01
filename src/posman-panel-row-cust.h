@@ -2,6 +2,7 @@
 
 #include <glib-object.h>
 #include <gtk/gtk.h>
+#include "posman-action-area.h"
 
 G_BEGIN_DECLS
 
@@ -17,4 +18,9 @@ void
 posman_panel_row_cust_set_id(PosmanPanelRowCust *self,gint64 id);
 gint64
 posman_panel_row_cust_get_id(PosmanPanelRowCust *self);
+PosmanActionArea *
+posman_panel_row_cust_get_action_area(PosmanPanelRowCust *self);
+void
+posman_panel_row_cust_set_action_area(PosmanPanelRowCust *self,
+                                      PosmanActionArea   *action_area);
 G_END_DECLS

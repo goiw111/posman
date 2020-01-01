@@ -15,25 +15,12 @@
             <property name="visible">True</property>
             <property name="can_focus">True</property>
             <property name="image">add_symbol</property>
-            <property name="action-name">menu.add</property>
+            <property name="action-name">win.addcmnd</property>
           </object>
           <packing>
             <property name="expand">False</property>
             <property name="fill">True</property>
             <property name="position">0</property>
-          </packing>
-        </child>
-        <child>
-          <object class="GtkModelButton" id="remove_">
-            <property name="visible">True</property>
-            <property name="can_focus">True</property>
-            <property name="image">remove_symbol</property>
-            <property name="action-name">menu.remove</property>
-          </object>
-          <packing>
-            <property name="expand">False</property>
-            <property name="fill">True</property>
-            <property name="position">1</property>
           </packing>
         </child>
       </object>
@@ -82,39 +69,8 @@
       </packing>
     </child>
   </object>
-  <object class="GtkBox" id="remove_symbol">
-    <property name="visible">True</property>
-    <property name="can_focus">False</property>
-    <child>
-      <object class="GtkImage">
-        <property name="visible">True</property>
-        <property name="can_focus">False</property>
-        <property name="icon_name">user-trash-symbolic</property>
-        <property name="margin">4</property>
-      </object>
-      <packing>
-        <property name="expand">True</property>
-        <property name="fill">True</property>
-        <property name="position">0</property>
-      </packing>
-    </child>
-    <child>
-      <object class="GtkLabel" id="label1">
-        <property name="visible">True</property>
-        <property name="can_focus">False</property>
-        <property name="xalign">0</property>
-        <property name="label" translatable="yes">remove command</property>
-      </object>
-      <packing>
-        <property name="expand">False</property>
-        <property name="fill">True</property>
-        <property name="position">1</property>
-      </packing>
-    </child>
-  </object>
   <object class="GtkSizeGroup">
     <widgets>
-      <widget name="label1"/>
       <widget name="label2"/>
     </widgets>
   </object>

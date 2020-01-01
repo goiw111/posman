@@ -16,6 +16,8 @@ void
 posman_window_get_cmnd_cust_with_id(PosmanWindow *self, gint64  id);
 void
 posman_window_add_cust(PosmanWindow *self);
+void
+fill_model_with_domains(PosmanWindow  *self);
 
 GtkWidget *
 posman_window_get_action_menu_cust(PosmanWindow *self);

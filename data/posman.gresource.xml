@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<gresources>
+  <gresource prefix="/org/pos/manager/data">
+    <file>box.png</file>
+    <file>boxes.png</file>
+  </gresource>
+</gresources>

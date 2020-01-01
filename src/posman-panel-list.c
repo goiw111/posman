@@ -2,6 +2,7 @@
 #include "posman-action-menu-cust.h"
 #include "posman-action-menu-cmnd.h"
 #include "posman-panel-row-cust.h"
+#include "posman-action-area.h"
 #include <sqlite3.h>
 
 struct _PosmanPanelList
@@ -13,6 +14,7 @@ struct _PosmanPanelList
   GtkWidget                 *add_cust;
 
   posmanpanellistview       view;
+  gint64                    cust_id;
 
   GObject                   *list_stor_cust;
   GObject                   *list_stor_cmnd;
@@ -39,6 +41,7 @@ enum {
   PROP_STOR_CUST,
   PROP_STOR_CMND,
   PROP_STOR_DOMAIN,
+  PROP_CUST_ID,
   N_PROPS
 };
 static GParamSpec *properties [N_PROPS] = { NULL, };
@@ -125,6 +128,9 @@ posman_panel_list_get_property (GObject    *object,
       case PROP_VIEW:
         g_value_set_int (value, self->view);
       break;
+      case PROP_CUST_ID:
+        g_value_set_int64(value,self->cust_id);
+        break;
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
     }
@@ -144,11 +150,14 @@ posman_panel_list_set_property (GObject      *object,
         posman_panel_list_set_view (self, g_value_get_int (value));
       break;
       case PROP_STOR_DOMAIN:
-        /*posman_panel_list_set_model_domain(self,g_value_get_object(value));*/
+        posman_panel_list_set_model_domain(self,g_value_get_object(value));
       break;
       case PROP_STOR_CUST:
         posman_panel_list_set_list_stor_cust(self,g_value_get_object(value));
       break;
+      case PROP_CUST_ID:
+        posman_panel_list_set_cust_id(self,g_value_get_int64 (value));
+        break;
 
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
@@ -218,6 +227,15 @@ posman_panel_list_class_init (PosmanPanelListClass *klass)
                       GTK_TYPE_LIST_STORE,
                       G_PARAM_READWRITE | G_PARAM_EXPLICIT_NOTIFY);
 
+  properties[PROP_CUST_ID] =
+  g_param_spec_int64 ("cust-id",
+                      "cust-id",
+                      "curent customer id",
+                      -1,
+                      G_MAXINT64,
+                      -1,
+                      G_PARAM_READWRITE | G_PARAM_EXPLICIT_NOTIFY);
+
   g_object_class_install_properties (object_class, N_PROPS, properties);
 
 }
@@ -263,6 +281,7 @@ posman_panel_list_remove_row_cust(PosmanPanelList     *self,
 {
   gtk_container_remove(GTK_CONTAINER (self->cust_listbox),
                        GTK_WIDGET (row));
+  gtk_widget_destroy (GTK_WIDGET (row));
 }
 
 void
@@ -277,8 +296,12 @@ posman_panel_list_set_model_domain(PosmanPanelList  *self,
 
   self->list_stor_domain = (GtkWidget *) g_object_ref (list_stor);
   if(self->list_stor_domain)
-    gtk_combo_box_set_model(GTK_COMBO_BOX (self->domain_combobox),
-                            GTK_TREE_MODEL (list_stor));
+    {
+      gtk_combo_box_set_model(GTK_COMBO_BOX (self->domain_combobox),
+                              GTK_TREE_MODEL (list_stor));
+      gtk_combo_box_set_id_column(GTK_COMBO_BOX (self->domain_combobox),
+                                  0);
+    }
 
   g_object_notify_by_pspec (G_OBJECT (self), properties[PROP_STOR_DOMAIN]);
 }
@@ -333,4 +356,98 @@ posman_panel_list_clear_add_cust(PosmanPanelList *self)
   gtk_text_buffer_set_text(gtk_text_view_get_buffer (GTK_TEXT_VIEW (self->description_textview)),
                            "",
                            -1);
+}
+
+gchar *
+posman_panel_list_get_sql_query(PosmanPanelList *self, gboolean *warning)
+{
+  gchar            *query;
+  const gchar      *name = NULL;
+  const gchar      *phone = NULL;
+  const gchar      *address = NULL;
+  const gchar      *domain = NULL;
+  g_autofree gchar            *description;
+  GtkTextIter                 start, end;
+  GtkTextBuffer               *buffer;
+
+
+  buffer      = gtk_text_view_get_buffer (GTK_TEXT_VIEW (self->description_textview));
+  gtk_text_buffer_get_bounds (buffer, &start, &end);
+
+  name        = gtk_entry_get_text (GTK_ENTRY (self->name_entry));
+  phone       = gtk_entry_get_text (GTK_ENTRY (self->phone_entry));
+  address     = gtk_entry_get_text (GTK_ENTRY (self->adress_entry));
+  domain      = gtk_combo_box_get_active_id (GTK_COMBO_BOX (self->domain_combobox));
+  description = gtk_text_buffer_get_text (buffer, &start, &end, FALSE);
+
+  query = g_strdup_printf("%s%s%s%s",
+                          strlen(name) > 5 ? "" : " the name not acceptable",
+                          (strlen(phone) == 0 ||
+                           strlen(phone) >= 10) ? "" : " the number not acceptable",
+                          strlen(address) > 3 ? "" : " the address not acceptable",
+                          domain != NULL ? "" : " please select a domain");
+
+  if(strlen (query) != 0)
+    {
+      *warning = FALSE;
+      return query;
+    }
+  free(query);
+  query = g_strdup_printf("INSERT INTO customer "
+                          "(full_name,address,domain_id,description,phone)"
+                          " VALUES (' %s',' %s',%s,' %s',' %s');",
+                          name,
+                          address,
+                          domain,
+                          description,
+                          phone);
+
+  *warning = TRUE;
+  return query;
+}
+
+const gchar *
+posman_panel_list_add_cust_get_name(PosmanPanelList *self)
+{
+  return gtk_entry_get_text (GTK_ENTRY (self->name_entry));;
+}
+
+void
+posman_panel_list_set_cust_id(PosmanPanelList *self,gint64  cust_id)
+{
+  g_return_if_fail (POSMAN_IS_PANEL_LIST (self));
+  if(cust_id < 0 )
+    return;
+  self->cust_id = cust_id;
+
+  g_print("cust id %li \n",cust_id);
+
+  g_object_notify_by_pspec(G_OBJECT (self),properties[PROP_CUST_ID]);
+}
+gint64
+posman_panel_list_get_cust_id(PosmanPanelList *self)
+{
+  g_return_val_if_fail (POSMAN_IS_PANEL_LIST (self),-1);
+
+  return self->cust_id;
+}
+
+PosmanPanelRowCust *
+posman_panel_list_get_panel_row_cust_by_id(PosmanPanelList  *self,
+                                           gint64           cust_id)
+{
+  g_return_val_if_fail (POSMAN_IS_PANEL_LIST (self),NULL);
+  guint        n;
+  gpointer     item;
+
+
+  n = g_list_model_get_n_items(G_LIST_MODEL (self->list_stor_cust));
+
+  while(n-- != 0)
+    {
+      item = g_list_model_get_item(G_LIST_MODEL (self->list_stor_cust),
+                                   n);
+      if(posman_panel_row_cust_get_id (POSMAN_PANEL_ROW_CUST (item)) == cust_id)
+        return POSMAN_PANEL_ROW_CUST (item);
+    }
 }
