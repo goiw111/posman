@@ -191,7 +191,6 @@ posman_action_area_class_init(PosmanActionAreaClass *klass)
 
   gtk_widget_class_set_template_from_resource(widget_class,
                                               "/org/pos/manager/posman-action-area.ui");
-  gtk_widget_class_bind_template_child(widget_class,PosmanActionArea,items_viewer);
 
   gtk_widget_class_bind_template_child(widget_class,PosmanActionArea,dashboard);
   gtk_widget_class_bind_template_child(widget_class,PosmanActionArea,add_cmnd);

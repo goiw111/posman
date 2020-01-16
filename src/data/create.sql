@@ -34,28 +34,24 @@ CREATE TABLE IF NOT EXISTS category (
 );
 
 CREATE TABLE IF NOT EXISTS suppliers (
-  id	 		INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+  id	 	INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
   full_name 	varchar(15),
-  phone 		varchar(15)
+  phone 	varchar(15)
 );
 
 CREATE TABLE IF NOT EXISTS brands (
-  id 		INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
-  name 		varchar(15),
-  info 		varchar(30),
-  sup_id 	INTEGER,
-
-  FOREIGN KEY (sup_id)
-  REFERENCES  suppliers(id)
+  id 	INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+  name 	varchar(15),
+  info 	varchar(30),
 );
 
 CREATE TABLE IF NOT EXISTS product (
   id 		INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
   full_name 	varchar(15),
   barcode 	varchar(15),
-  category_id 	INTEGER,
-  unit_in_pack 	INTEGER,
-  brand_id 	INTEGER,
+  category_id 	INTEGER NOT NULL,
+  unit_in_pack 	INTEGER NOT NULL,
+  brand_id 	INTEGER NOT NULL,
 
   FOREIGN KEY (category_id)
   REFERENCES  category(id),
@@ -64,13 +60,24 @@ CREATE TABLE IF NOT EXISTS product (
   REFERENCES  brands(id)
 );
 
+CREATE TABLE IF NOT EXISTS product_suplier (
+  prod_id	INTEGER NOT NULL,
+  splr_id	INTEGER NOT NULL,
+
+  FOREIGN KEY (splr_id)
+  REFERENCES  suppliers(id),
+
+  FOREIGN KEY (prod_id)
+  REFERENCES  product(id)
+);
+
 CREATE TABLE IF NOT EXISTS stock (
-  id 			INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
-  prod_id 		INTEGER,
-  quantity 		INTEGER,
-  P_date 		DATETIME,
-  E_date 		DATETIME,
-  buy_price 		REAL,
+  id 		INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+  prod_id 	INTEGER,
+  quantity 	INTEGER,
+  P_date 	DATETIME,
+  E_date 	DATETIME,
+  buy_price	REAL,
 
   FOREIGN KEY (prod_id)
   REFERENCES  product(id)
@@ -125,6 +132,18 @@ CREATE TABLE IF NOT EXISTS payment (
   REFERENCES  customer(id)
 );
 
+CREATE TABLE IF NOT EXISTS validation (
+  id		INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+  payment_id	INTEGER,
+  val_value	FLOAT,
+  order_id	INTEGER,
+
+  FOREIGN KEY (payment_id)
+   REFERENCES  payment(id),
+  FOREIGN KEY (order_id)
+   REFERENCES  orders(id),
+);
+
 CREATE TABLE IF NOT EXISTS payment_cheque (
   id            INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
   payment_id    INTEGER,
@@ -147,3 +166,4 @@ CREATE TABLE IF NOT EXISTS payment_cash (
   FOREIGN KEY (pay_id)
   REFERENCES  payment(id)
 );
+

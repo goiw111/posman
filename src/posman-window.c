@@ -47,6 +47,8 @@ enum {
   N_CMND_COL
 };
 
+GdkPixbuf *item,*items;
+
 G_DEFINE_TYPE(PosmanWindow, posman_window, GTK_TYPE_APPLICATION_WINDOW)
 
 static void
@@ -256,13 +258,20 @@ list_box_row_activated(GSimpleAction *simple,
 
 static void
 fill_action_area(PosmanWindow *self,
-                 GtkIconView *iconview)
+                 GtkWidget    *iconview)
 {
   gint              rc;
   sqlite3_stmt      *res;
+  g_autofree gchar*            buffer;
 
+  buffer = g_strdup_printf ("select id,name,false as type from category "\
+                            "where cat_id is null union "\
+                            "select s.id,p.full_name, true as type from stock as s "\
+                            "inner join product as p on s.prod_id = p.id and p.category_id is null "\
+                            "left JOIN order_items as o on s.id = o.stock_id group by s.id "\
+                            "having sum(o.quantity) < sum(s.quantity) or o.id is null order by type,id");
 
-  rc = sqlite3_prepare_v2(self->db, "select id,full_name from customer;", -1, &res, 0);
+  rc = sqlite3_prepare_v2(self->db,buffer,-1, &res, 0);
   if (rc != SQLITE_OK)
     {
       fprintf(stderr, "Failed to fetch data: %s\n", sqlite3_errmsg(self->db));
@@ -272,11 +281,13 @@ fill_action_area(PosmanWindow *self,
 
   while (sqlite3_step(res) != SQLITE_DONE)
     {
-      gtk_list_store_insert_with_values(GTK_LIST_STORE(self->domain_model),
+      gtk_list_store_insert_with_values(GTK_LIST_STORE(iconview),
                                         NULL,
                                         -1,
-                                        0, sqlite3_column_text(res, 0),
+                                        0, sqlite3_column_int64(res, 0),
                                         1, sqlite3_column_text(res, 1),
+                                        2, sqlite3_column_int(res,2)? item: items,
+                                        3, (gboolean)sqlite3_column_int(res,2),
                                         -1);
     }
 }
@@ -290,13 +301,13 @@ add_cmnd_button_pressed(GSimpleAction *simple,
   gint64                  cust_id;
   PosmanPanelRowCust      *row_cust;
   PosmanActionArea        *action_area;
-  GtkIconView             *iconview;
+  GtkWidget               *iconview;
 
   cust_id = posman_panel_list_get_cust_id(POSMAN_PANEL_LIST (self->panel_list));
   row_cust = posman_panel_list_get_panel_row_cust_by_id (POSMAN_PANEL_LIST (self->panel_list),
                                                          cust_id);
   action_area = posman_panel_row_cust_get_action_area(row_cust);
-  iconview  = posman_action_area_get_iconview_item_viewer(action_area);
+  iconview  = posman_action_area_get_items_viewer(action_area);
 
   posman_action_area_set_view(POSMAN_ACTION_AREA (action_area),
                               posman_action_area_view_add_cmnd);
@@ -434,6 +445,8 @@ posman_window_init(PosmanWindow *self)
 {
   gtk_widget_init_template(GTK_WIDGET(self));
   posman_window_init_database(self);
+  item  = gdk_pixbuf_new_from_resource_at_scale("/org/pos/manager/data/box.png",48,48,FALSE,NULL);
+  items = gdk_pixbuf_new_from_resource_at_scale("/org/pos/manager/data/boxes.png",48,48,FALSE,NULL);
 }
 void
 posman_window_remove_cust_with_id(PosmanWindow *self, gint64 id)

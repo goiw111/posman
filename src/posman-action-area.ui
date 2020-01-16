@@ -62,7 +62,10 @@
                 <property name="can_focus">True</property>
                 <property name="margin">6</property>
                 <property name="model">items_viewer</property>
-                <signal name="item-activated" handler="item_activated_callback0" object="PosmanActionArea"/>
+                <property name="columns">3</property>
+                <property name="pixbuf-column">2</property>
+                <property name="text-column">1</property>
+                <signal name="item-activated" handler="item_activated_callback0" object="PosmanActionArea" swapped="no" />
               </object>
               <packing>
                 <property name="expand">True</property>
