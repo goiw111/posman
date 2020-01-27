@@ -19,6 +19,10 @@ struct _PosmanActionArea {
 
   PosmanActionAreaView  view;
   gint64                cust_id;
+
+  GtkWidget             *qt_sb;
+  GtkWidget             *price_sb;
+  GtkWidget             *combo_date;
 };
 
 G_DEFINE_TYPE(PosmanActionArea, posman_action_area, GTK_TYPE_STACK)
@@ -30,6 +34,7 @@ enum {
   PROP_VIEW,
   PROP_CUST_ID,
   PROP_ICONVIEW_ITEM_VIEWER,
+  PROP_COMBO,
 
   N_PROPS
 };
@@ -80,6 +85,32 @@ get_action_area_from_view(PosmanActionArea      *self,
     }
 }
 
+static void
+posman_action_area_active_id(GObject    *gobject,
+                             GParamSpec *pspec,
+                             gpointer    user_data)
+{
+  GtkComboBox         *combobox = GTK_COMBO_BOX (gobject);
+  PosmanActionArea    *self = POSMAN_ACTION_AREA (user_data);
+  GtkTreeModel        *model;
+  GtkTreeIter         iter;
+  GtkWidget           *adj1,*adj2;
+
+  if(gtk_combo_box_get_active_id (combobox) == NULL)
+    return;
+
+  model = gtk_combo_box_get_model (combobox);
+  gtk_combo_box_get_active_iter(combobox,&iter);
+  gtk_tree_model_get (model, &iter,2,&adj1,3,&adj2,-1);
+
+  gtk_spin_button_set_adjustment (GTK_SPIN_BUTTON (self->qt_sb),
+                                  GTK_ADJUSTMENT (adj1));
+  gtk_spin_button_set_adjustment (GTK_SPIN_BUTTON (self->price_sb),
+                                  GTK_ADJUSTMENT (adj2));
+}
+
+/* vfnc */
+
 PosmanActionArea *
 posman_action_area_new(void)
 {
@@ -108,7 +139,10 @@ posman_action_area_dispose(GObject *object)
 static void
 posman_action_area_constructed(GObject  *object)
 {
-  PosmanActionArea *self = (PosmanActionArea*)object;
+  PosmanActionArea  *self = (PosmanActionArea*)object;
+  GtkListStore      *model;
+
+  G_OBJECT_CLASS(posman_action_area_parent_class)->constructed(object);
 
   gtk_label_set_text (GTK_LABEL (self->label1),
                       g_strdup_printf ("%li",self->cust_id));
@@ -121,7 +155,18 @@ posman_action_area_constructed(GObject  *object)
   gtk_tree_view_set_model (GTK_TREE_VIEW (self->treeview_items),
                            GTK_TREE_MODEL (self->items));
 
-  G_OBJECT_CLASS(posman_action_area_parent_class)->constructed(object);
+
+  model = gtk_list_store_new (4,G_TYPE_STRING,
+                              G_TYPE_STRING,
+                              GTK_TYPE_ADJUSTMENT,
+                              GTK_TYPE_ADJUSTMENT);
+  gtk_combo_box_set_model (GTK_COMBO_BOX (self->combo_date),
+                           GTK_TREE_MODEL (model));
+
+  g_signal_connect (self->combo_date,
+                    "notify::active-id",
+                    G_CALLBACK (posman_action_area_active_id),
+                    object);
 }
 
 static void
@@ -148,6 +193,9 @@ posman_action_area_get_property(GObject    *object,
         break;
       case PROP_ICONVIEW_ITEM_VIEWER:
         g_value_set_object (value, self->iconview_items_viewer);
+        break;
+      case PROP_COMBO:
+        g_value_set_object (value, self->combo_date);
         break;
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID(object, prop_id, pspec);
@@ -200,6 +248,9 @@ posman_action_area_class_init(PosmanActionAreaClass *klass)
   gtk_widget_class_bind_template_child(widget_class,PosmanActionArea,items_viewer);
   gtk_widget_class_bind_template_child(widget_class,PosmanActionArea,treeview_items);
   gtk_widget_class_bind_template_child(widget_class,PosmanActionArea,iconview_items_viewer);
+  gtk_widget_class_bind_template_child (widget_class, PosmanActionArea, qt_sb);
+  gtk_widget_class_bind_template_child (widget_class, PosmanActionArea, price_sb);
+  gtk_widget_class_bind_template_child (widget_class, PosmanActionArea, combo_date);
   gtk_widget_class_bind_template_callback (widget_class, item_activated_callback0);
 
   properties[PROP_ITEMS] =
@@ -240,6 +291,13 @@ posman_action_area_class_init(PosmanActionAreaClass *klass)
                      G_MAXINT64,
                      -1,
                      G_PARAM_READWRITE | G_PARAM_EXPLICIT_NOTIFY | G_PARAM_CONSTRUCT_ONLY);
+
+  properties[PROP_COMBO] =
+  g_param_spec_object ("combo-module",
+                       "combo-module",
+                       "combobox for the stock date and the rest quantity",
+                       GTK_TYPE_COMBO_BOX,
+                       G_PARAM_READABLE | G_PARAM_EXPLICIT_NOTIFY);
 
   g_object_class_install_properties (object_class, N_PROPS, properties);
 
@@ -338,4 +396,28 @@ posman_action_area_get_iconview_item_viewer(PosmanActionArea  *self)
   g_return_val_if_fail (POSMAN_IS_ACTION_AREA (self),NULL);
 
   return (GtkIconView*) self->iconview_items_viewer;
+}
+
+void
+posman_action_area_set_qt_adj(PosmanActionArea  *self,GtkAdjustment *adj)
+{
+  g_return_if_fail (POSMAN_IS_ACTION_AREA (self));
+  g_return_if_fail (GTK_IS_ADJUSTMENT (adj));
+
+  gtk_spin_button_set_adjustment (GTK_SPIN_BUTTON (self->qt_sb), adj);
+}
+
+void
+posman_action_area_set_price_adj(PosmanActionArea  *self,GtkAdjustment *adj)
+{
+  g_return_if_fail (POSMAN_IS_ACTION_AREA (self));
+  g_return_if_fail (GTK_IS_ADJUSTMENT (adj));
+
+  gtk_spin_button_set_adjustment (GTK_SPIN_BUTTON (self->price_sb), adj);
+}
+
+GtkComboBox*
+posman_action_area_get_combo(PosmanActionArea  *self)
+{
+  return  GTK_COMBO_BOX (self->combo_date);
 }

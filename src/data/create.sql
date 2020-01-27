@@ -84,10 +84,10 @@ CREATE TABLE IF NOT EXISTS stock (
 );
 
 CREATE TABLE IF NOT EXISTS prices (
-  id 			INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+  id 			INTEGER PRIMARY KEY AUTOINCREMENfT NOT NULL,
   domain_id 		INTEGER,
   value 		REAL,
-  stock_id 		INTEGER,
+  prod_id 		INTEGER,
 
   FOREIGN KEY (domain_id)
   REFERENCES  domains(id),

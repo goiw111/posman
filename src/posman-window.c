@@ -67,6 +67,70 @@ posman_window_init_database(PosmanWindow *self)
     }
 }
 
+static void
+fill_action_area(PosmanWindow *self,
+                 GtkWidget    *iconview,
+                 gint64        id)
+{
+  gint                rc;
+  sqlite3_stmt        *res;
+  g_autofree gchar*   buffer;
+  g_autofree gchar*   str_id = g_new(gchar,G_ASCII_DTOSTR_BUF_SIZE);
+  str_id = (id == -1)?NULL:g_ascii_dtostr(str_id,sizeof (str_id),(gdouble)id);
+
+  buffer = g_strdup_printf ("select id,name,false as type from category "\
+                            "where cat_id is %s union "\
+                            "select p.id,p.full_name, true as type from stock as s "\
+                            "inner join product as p on s.prod_id = p.id and p.category_id is %s "\
+                            "left JOIN order_items as o on s.id = o.stock_id group by s.id "\
+                            "having sum(o.quantity) < sum(s.quantity) or o.id is null order by type,id",
+                            str_id,str_id);
+
+  rc = sqlite3_prepare_v2(self->db,buffer,-1, &res, 0);
+  if (rc != SQLITE_OK)
+    {
+      fprintf(stderr, "Failed to fetch data: %s\n", sqlite3_errmsg(self->db));
+      sqlite3_finalize(res);
+      return;
+    }
+
+  gtk_list_store_clear(GTK_LIST_STORE(iconview));
+  while (sqlite3_step(res) != SQLITE_DONE)
+    {
+      gtk_list_store_insert_with_values(GTK_LIST_STORE(iconview),
+                                        NULL,
+                                        -1,
+                                        0, sqlite3_column_int64(res, 0),
+                                        1, sqlite3_column_text(res, 1),
+                                        2, sqlite3_column_int(res,2)? item: items,
+                                        3, (gboolean)sqlite3_column_int(res,2),
+                                        -1);
+    }
+  sqlite3_finalize(res);
+}
+
+static void
+fill_combobox_model(PosmanWindow *self,
+                    GtkComboBox  *combobox,
+                    gint64        id)
+{
+  GtkTreeModel        *model;
+  g_autofree gchar    *buffer;
+  gint                rc;
+  sqlite3_stmt        *res;
+
+  model = gtk_combo_box_get_model (combobox);
+
+  buffer = g_strdup_printf ("");
+
+  rc = sqlite3_prepare_v2(self->db,buffer,-1, &res, 0);
+  if (rc != SQLITE_OK)
+    {
+      fprintf(stderr, "Failed to fetch data: %s\n", sqlite3_errmsg(self->db));
+      sqlite3_finalize(res);
+      return;
+    }
+}
 /* callback */
 
 void
@@ -75,7 +139,43 @@ item_activated_callback(PosmanActionArea  *action_area,
                         GtkTreePath       *path,
                         gpointer          user_data)
 {
-  g_print("here\n");
+  PosmanWindow        *self = POSMAN_WINDOW(user_data);
+  GtkTreeModel        *model;
+  GtkComboBox         *combo;
+  GtkTreeIter         iter;
+  gboolean            is_item;
+  gint64              id;
+
+
+  model = gtk_icon_view_get_model (icon_view);
+  combo = posman_action_area_get_combo (action_area);
+  gtk_tree_model_get_iter(model,&iter,path);
+  gtk_tree_model_get(model,&iter,3,&is_item,0,&id,-1);
+
+  if(is_item)
+    fill_combobox_model(self,combo,id);
+  else
+    fill_action_area(self,(GtkWidget*)model,id);
+
+  /*GtkTreeModel        *model;
+  GtkTreeIter         iter;
+  gint64              id;
+  g_autofree gchar    *buffer;
+  gint                rc;
+  sqlite3_stmt        *res;
+
+  model = gtk_icon_view_get_model (icon_view);
+  gtk_tree_model_get_iter(model,&iter,path);
+  gtk_tree_model_get(model,&iter,0,&id,-1);
+  buffer = g_strdup_printf ("");
+
+  rc = sqlite3_prepare_v2(self->db,buffer,-1, &res, 0);
+  if (rc != SQLITE_OK)
+    {
+      fprintf(stderr, "Failed to fetch data: %s\n", sqlite3_errmsg(self->db));
+      sqlite3_finalize(res);
+      return;
+    }*/
 
 }
 
@@ -257,42 +357,6 @@ list_box_row_activated(GSimpleAction *simple,
 }
 
 static void
-fill_action_area(PosmanWindow *self,
-                 GtkWidget    *iconview)
-{
-  gint              rc;
-  sqlite3_stmt      *res;
-  g_autofree gchar*            buffer;
-
-  buffer = g_strdup_printf ("select id,name,false as type from category "\
-                            "where cat_id is null union "\
-                            "select s.id,p.full_name, true as type from stock as s "\
-                            "inner join product as p on s.prod_id = p.id and p.category_id is null "\
-                            "left JOIN order_items as o on s.id = o.stock_id group by s.id "\
-                            "having sum(o.quantity) < sum(s.quantity) or o.id is null order by type,id");
-
-  rc = sqlite3_prepare_v2(self->db,buffer,-1, &res, 0);
-  if (rc != SQLITE_OK)
-    {
-      fprintf(stderr, "Failed to fetch data: %s\n", sqlite3_errmsg(self->db));
-      sqlite3_finalize(res);
-      return;
-    }
-
-  while (sqlite3_step(res) != SQLITE_DONE)
-    {
-      gtk_list_store_insert_with_values(GTK_LIST_STORE(iconview),
-                                        NULL,
-                                        -1,
-                                        0, sqlite3_column_int64(res, 0),
-                                        1, sqlite3_column_text(res, 1),
-                                        2, sqlite3_column_int(res,2)? item: items,
-                                        3, (gboolean)sqlite3_column_int(res,2),
-                                        -1);
-    }
-}
-
-static void
 add_cmnd_button_pressed(GSimpleAction *simple,
                         GVariant      *parameter,
                         gpointer user_data)
@@ -312,7 +376,7 @@ add_cmnd_button_pressed(GSimpleAction *simple,
   posman_action_area_set_view(POSMAN_ACTION_AREA (action_area),
                               posman_action_area_view_add_cmnd);
   g_signal_connect(action_area,"item-activated",G_CALLBACK(item_activated_callback),self);
-  fill_action_area(self,iconview);
+  fill_action_area(self,iconview,-1);
 }
 
 

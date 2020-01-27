@@ -42,4 +42,12 @@ posman_action_area_get_cust_id(PosmanActionArea *self);
 GtkIconView *
 posman_action_area_get_iconview_item_viewer(PosmanActionArea  *self);
 
+void
+posman_action_area_set_qt_adj(PosmanActionArea  *self,GtkAdjustment *adj);
+void
+posman_action_area_set_price_adj(PosmanActionArea  *self,GtkAdjustment *adj);
+
+GtkComboBox*
+posman_action_area_get_combo(PosmanActionArea  *self);
+
 G_END_DECLS
