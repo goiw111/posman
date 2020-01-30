@@ -19,6 +19,7 @@ struct _PosmanActionArea {
 
   PosmanActionAreaView  view;
   gint64                cust_id;
+  gint                  cust_dmn;
 
   GtkWidget             *qt_sb;
   GtkWidget             *price_sb;
@@ -33,6 +34,7 @@ enum {
   PROP_ITEMS_VIEWER,
   PROP_VIEW,
   PROP_CUST_ID,
+  PROP_CUST_DMN,
   PROP_ICONVIEW_ITEM_VIEWER,
   PROP_COMBO,
 
@@ -197,6 +199,9 @@ posman_action_area_get_property(GObject    *object,
       case PROP_COMBO:
         g_value_set_object (value, self->combo_date);
         break;
+      case PROP_CUST_DMN:
+        g_value_set_int (value,self->cust_dmn);
+        break;
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID(object, prop_id, pspec);
     }
@@ -219,6 +224,10 @@ posman_action_area_set_property(GObject      *object,
       case PROP_CUST_ID:
         posman_action_area_set_cust_id(self,
                                        g_value_get_int64 (value));
+        break;
+      case PROP_CUST_DMN:
+        posman_action_area_set_cust_dmn(self,
+                                       g_value_get_int (value));
         break;
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID(object, prop_id, pspec);
@@ -291,6 +300,15 @@ posman_action_area_class_init(PosmanActionAreaClass *klass)
                      G_MAXINT64,
                      -1,
                      G_PARAM_READWRITE | G_PARAM_EXPLICIT_NOTIFY | G_PARAM_CONSTRUCT_ONLY);
+
+  properties[PROP_CUST_DMN] =
+  g_param_spec_int("cust-dmn",
+                    "cust-dmn",
+                    "customer domain",
+                    -1,
+                    G_MAXINT,
+                    -1,
+                    G_PARAM_READWRITE | G_PARAM_EXPLICIT_NOTIFY | G_PARAM_CONSTRUCT_ONLY);
 
   properties[PROP_COMBO] =
   g_param_spec_object ("combo-module",
@@ -382,12 +400,32 @@ posman_action_area_set_cust_id(PosmanActionArea  *self,
   g_object_notify_by_pspec (G_OBJECT (self), properties[PROP_CUST_ID]);
 }
 
+void
+posman_action_area_set_cust_dmn(PosmanActionArea  *self,
+                                gint              cust_dmn)
+{
+  g_return_if_fail (POSMAN_IS_ACTION_AREA (self));
+
+  if(cust_dmn >= 0)
+    self->cust_dmn = cust_dmn;
+
+  g_object_notify_by_pspec (G_OBJECT (self), properties[PROP_CUST_DMN]);
+}
+
 gint64
 posman_action_area_get_cust_id(PosmanActionArea *self)
 {
   g_return_val_if_fail (POSMAN_IS_ACTION_AREA (self),-1);
 
   return self->cust_id;
+}
+
+gint
+posman_action_area_get_cust_dmn(PosmanActionArea *self)
+{
+  g_return_val_if_fail (POSMAN_IS_ACTION_AREA (self),-1);
+
+  return self->cust_dmn;
 }
 
 GtkIconView *

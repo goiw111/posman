@@ -39,6 +39,13 @@ posman_action_area_set_cust_id(PosmanActionArea  *self,
 gint64
 posman_action_area_get_cust_id(PosmanActionArea *self);
 
+gint
+posman_action_area_get_cust_dmn(PosmanActionArea *self);
+
+void
+posman_action_area_set_cust_dmn(PosmanActionArea  *self,
+                                gint            cust_dmn);
+
 GtkIconView *
 posman_action_area_get_iconview_item_viewer(PosmanActionArea  *self);
 

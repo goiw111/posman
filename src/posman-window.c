@@ -110,16 +110,19 @@ fill_action_area(PosmanWindow *self,
 }
 
 static void
-fill_combobox_model(PosmanWindow *self,
-                    GtkComboBox  *combobox,
-                    gint64        id)
+fill_combobox_model(PosmanWindow      *self,
+                    PosmanActionArea  *action,
+                    GtkComboBox       *combobox,
+                    gint64            id)
 {
   GtkTreeModel        *model;
   g_autofree gchar    *buffer;
   gint                rc;
   sqlite3_stmt        *res;
+  gint                dmn_id;
 
   model = gtk_combo_box_get_model (combobox);
+  dmn_id = posman_action_area_get_cust_dmn (action);
 
   buffer = g_strdup_printf ("");
 
@@ -153,7 +156,7 @@ item_activated_callback(PosmanActionArea  *action_area,
   gtk_tree_model_get(model,&iter,3,&is_item,0,&id,-1);
 
   if(is_item)
-    fill_combobox_model(self,combo,id);
+    fill_combobox_model(self,action_area,combo,id);
   else
     fill_action_area(self,(GtkWidget*)model,id);
 
