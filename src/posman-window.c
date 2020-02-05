@@ -121,10 +121,38 @@ fill_combobox_model(PosmanWindow      *self,
   sqlite3_stmt        *res;
   gint                dmn_id;
 
+  enum{
+    price,
+    stock_date,
+    stock_id,
+    prodect_name,/**/
+    unit_in_pack,/**/
+    inc_unit,
+    property,/**/
+    buy_price,
+    rest
+  };
+
   model = gtk_combo_box_get_model (combobox);
   dmn_id = posman_action_area_get_cust_dmn (action);
 
-  buffer = g_strdup_printf ("");
+  buffer = g_strdup_printf ("WITH RECURSIVE domain_family(id,parent_domain_id) AS ( "\
+                            "select id,parent_domain_id from domains where id is %i UNION ALL "\
+                            "select d.id,d.parent_domain_id from domains as d,domain_family as f "\
+                            "where d.id = f.parent_domain_id) "\
+                            "select p.value as price,DATE(s.stock_date)||'('|| ifnull((s.quantity - sum(o.quantity)),s.quantity)||')' as stock_date, "\
+                            "p.stock_id,pr.full_name  as prodect_name,pr.unit_in_pack,pr.inc_unit,pr.property "\
+                            ",s.buy_price,ifnull((s.quantity - sum(o.quantity)),s.quantity) as rest from domains as d1 "\
+                            "left join domains as d2 on d2.parent_domain_id = d1.id "\
+                            "inner join prices as p on p.domain_id = d1.id "\
+                            "inner join product as pr on pr.id = s.prod_id and pr.id is %li "\
+                            "inner join stock as s on s.id = p.stock_id "\
+                            "left JOIN order_items as o on s.id = o.stock_id "\
+                            "where domain_id in (SELECT id FROM domain_family) "\
+                            "and (d2.id is null or d1.parent_domain_id is null) group by s.id "\
+                            "having max(ifnull(d1.parent_domain_id,0.5)) "\
+                            "and (sum(o.quantity) < s.quantity or o.id is null) ORDER BY rest desc"\
+                            ,posman_action_area_get_cust_dmn (action),id);
 
   rc = sqlite3_prepare_v2(self->db,buffer,-1, &res, 0);
   if (rc != SQLITE_OK)
@@ -133,6 +161,33 @@ fill_combobox_model(PosmanWindow      *self,
       sqlite3_finalize(res);
       return;
     }
+  gtk_list_store_clear (GTK_LIST_STORE(model));
+  while (sqlite3_step(res) != SQLITE_DONE)
+    {
+      gtk_list_store_insert_with_values(GTK_LIST_STORE(model),
+                                        NULL,
+                                        -1,
+                                        0, sqlite3_column_text(res, stock_date),
+                                        1, sqlite3_column_text(res, stock_id),
+                                        2, gtk_adjustment_new (sqlite3_column_double (res, inc_unit),
+                                                               sqlite3_column_double (res, inc_unit),
+                                                               sqlite3_column_double (res, rest),
+                                                               sqlite3_column_double (res, inc_unit),
+                                                               1,0),
+                                        3, gtk_adjustment_new (sqlite3_column_double (res, price),
+                                                               sqlite3_column_double (res, buy_price),
+                                                               G_MAXDOUBLE,
+                                                               0.5,0.5,0.5),
+                                        4,sqlite3_column_text(res,prodect_name),
+                                        5,sqlite3_column_text(res,unit_in_pack),
+                                        6,sqlite3_column_text(res,property),
+                                        -1);
+    }
+  gtk_combo_box_set_active (combobox, 0);
+
+
+
+  sqlite3_finalize(res);
 }
 /* callback */
 
@@ -160,26 +215,16 @@ item_activated_callback(PosmanActionArea  *action_area,
   else
     fill_action_area(self,(GtkWidget*)model,id);
 
-  /*GtkTreeModel        *model;
-  GtkTreeIter         iter;
-  gint64              id;
-  g_autofree gchar    *buffer;
-  gint                rc;
-  sqlite3_stmt        *res;
+}
 
-  model = gtk_icon_view_get_model (icon_view);
-  gtk_tree_model_get_iter(model,&iter,path);
-  gtk_tree_model_get(model,&iter,0,&id,-1);
-  buffer = g_strdup_printf ("");
+void
+home_activated_callback(PosmanActionArea    *action,
+                        GtkListStore        *list_stor,
+                        gpointer            user_data)
+{
+  PosmanWindow          *self = POSMAN_WINDOW(user_data);
 
-  rc = sqlite3_prepare_v2(self->db,buffer,-1, &res, 0);
-  if (rc != SQLITE_OK)
-    {
-      fprintf(stderr, "Failed to fetch data: %s\n", sqlite3_errmsg(self->db));
-      sqlite3_finalize(res);
-      return;
-    }*/
-
+  fill_action_area(self,(GtkWidget*)list_stor,-1);
 }
 
 static void
@@ -307,7 +352,10 @@ list_box_row_activated(GSimpleAction *simple,
 {
   PosmanWindow       *self = POSMAN_WINDOW(user_data);
   gint64             cust_id = g_variant_get_int64(parameter);
+  int                rc;
+  sqlite3_stmt       *res;
   g_autofree gchar   *cust_id_str = g_strdup_printf("%li", cust_id);
+  g_autofree gchar   *buffer;
   GtkWidget          *child = gtk_stack_get_child_by_name(GTK_STACK (self->action_area_container),
                                  cust_id_str);
   PosmanPanelRowCust *row = posman_panel_list_get_panel_row_cust_by_id(POSMAN_PANEL_LIST (self->panel_list),
@@ -320,10 +368,20 @@ list_box_row_activated(GSimpleAction *simple,
                                  posman_panel_list_cust);
       return;
     }
+  buffer = g_strdup_printf ("select domain_id from customer where id is %li",cust_id);
+  rc = sqlite3_prepare_v2(self->db,buffer,-1, &res, 0);
+      if (rc != SQLITE_OK)
+        {
+          fprintf(stderr, "SQL error: %s\n", sqlite3_errmsg(self->db));
+          sqlite3_finalize(res);
+          return;
+        }
+  sqlite3_step(res);
 
   PosmanActionArea   *cust_area =
   g_object_new(POSMAN_TYPE_ACTION_AREA,
                "cust-id",cust_id,
+               "cust-dmn",sqlite3_column_int (res, 0),
                NULL);
 
   posman_panel_row_cust_set_action_area (row, cust_area);
@@ -354,6 +412,7 @@ list_box_row_activated(GSimpleAction *simple,
       list = g_list_next (list);
     }
   g_list_free(list);
+  sqlite3_finalize(res);
 
   posman_panel_list_set_view(POSMAN_PANEL_LIST(self->panel_list),
                              posman_panel_list_cust);
@@ -378,7 +437,10 @@ add_cmnd_button_pressed(GSimpleAction *simple,
 
   posman_action_area_set_view(POSMAN_ACTION_AREA (action_area),
                               posman_action_area_view_add_cmnd);
-  g_signal_connect(action_area,"item-activated",G_CALLBACK(item_activated_callback),self);
+  g_signal_connect(action_area,"item-activated",
+                   G_CALLBACK(item_activated_callback),self);
+  g_signal_connect(action_area,"home-activated",
+                   G_CALLBACK(home_activated_callback),self);
   fill_action_area(self,iconview,-1);
 }
 
@@ -393,7 +455,7 @@ create_action_group(PosmanWindow *self)
     { "previouspressed", previous_button_pressed     },
     { "savepressed",     save_button_pressed         },
     { "addcmnd",         add_cmnd_button_pressed     },
-    { "rowactivated",    list_box_row_activated,  "x"}
+    { "rowactivated",    list_box_row_activated,  "x"},
   };
 
   group = g_simple_action_group_new();

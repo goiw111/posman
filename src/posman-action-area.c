@@ -1,4 +1,4 @@
- #include "posman-action-area.h"
+#include "posman-action-area.h"
 
 struct _PosmanActionArea {
   GtkStack parent_instance;
@@ -44,6 +44,7 @@ enum {
 enum {
   VIEW_CHANGED,
   ITEM_ACTIVATED,
+  HOME_ACTIVATED,
 
   LAST_SIGNAL
 };
@@ -61,6 +62,56 @@ item_activated_callback0(GtkIconView *iconview,
   PosmanActionArea  *self = POSMAN_ACTION_AREA (user_data);
 
   g_signal_emit (self, signals[ITEM_ACTIVATED], 0, iconview, path);
+}
+
+void
+home_activated_cb(GtkButton *button,
+                  gpointer   user_data)
+{
+  PosmanActionArea  *self = POSMAN_ACTION_AREA (user_data);
+  g_signal_emit (self, signals[HOME_ACTIVATED], 0, self->items_viewer);
+}
+
+GValue *
+gtk_tree_model_get_values(GtkTreeModel  *combo_model,
+                          GtkTreeIter   iter)
+{
+  gint n = gtk_tree_model_get_n_columns(combo_model);
+  GValue    *value_array = g_new0 (GValue, n);
+  for(gint i = 0; i<n ;i++)
+    {
+      gtk_tree_model_get_value(combo_model,
+                               &iter,
+                               i,
+                               &value_array[i]);
+    }
+  return &value_array[0];
+}
+
+void
+add_button_callback(GtkButton *button,
+                    gpointer   user_data)
+{
+  PosmanActionArea  *self = POSMAN_ACTION_AREA (user_data);
+  GtkTreeIter       iter,iter_c;
+  GtkTreeModel      *combo_model = gtk_combo_box_get_model (GTK_COMBO_BOX (self->combo_date));
+  GtkTreeModel      *list_model = gtk_tree_view_get_model (GTK_TREE_VIEW (self->treeview_items));
+  gint              columns[] = {0,1,2,3,4,5,6};
+
+  if(!gtk_tree_model_get_iter_first(GTK_TREE_MODEL (combo_model),
+                                    &iter))
+    {
+    g_message("sorry i can't find and thing in the first row");
+      return;
+    }
+  GValue *value = gtk_tree_model_get_values(combo_model,iter);
+  gtk_list_store_append(GTK_LIST_STORE (list_model),&iter_c);
+  gtk_list_store_set_valuesv(GTK_LIST_STORE (list_model),
+                             &iter_c,
+                             columns,
+                             value,
+                             gtk_tree_model_get_n_columns(combo_model));
+
 }
 
 /* Auxiliary */
@@ -149,19 +200,24 @@ posman_action_area_constructed(GObject  *object)
   gtk_label_set_text (GTK_LABEL (self->label1),
                       g_strdup_printf ("%li",self->cust_id));
 
-  self->items = (GtkWidget*)gtk_tree_store_new(5, G_TYPE_INT,
-                                               GTK_TYPE_ADJUSTMENT,
+  self->items = (GtkWidget*)gtk_list_store_new(7,G_TYPE_STRING,
                                                G_TYPE_STRING,
                                                GTK_TYPE_ADJUSTMENT,
-                                               G_TYPE_INT);
+                                               GTK_TYPE_ADJUSTMENT,
+                                               G_TYPE_STRING,
+                                               G_TYPE_STRING,
+                                               G_TYPE_STRING);
   gtk_tree_view_set_model (GTK_TREE_VIEW (self->treeview_items),
                            GTK_TREE_MODEL (self->items));
 
 
-  model = gtk_list_store_new (4,G_TYPE_STRING,
+  model = gtk_list_store_new (7,G_TYPE_STRING,
                               G_TYPE_STRING,
                               GTK_TYPE_ADJUSTMENT,
-                              GTK_TYPE_ADJUSTMENT);
+                              GTK_TYPE_ADJUSTMENT,
+                              G_TYPE_STRING,
+                              G_TYPE_STRING,
+                              G_TYPE_STRING);
   gtk_combo_box_set_model (GTK_COMBO_BOX (self->combo_date),
                            GTK_TREE_MODEL (model));
 
@@ -261,6 +317,8 @@ posman_action_area_class_init(PosmanActionAreaClass *klass)
   gtk_widget_class_bind_template_child (widget_class, PosmanActionArea, price_sb);
   gtk_widget_class_bind_template_child (widget_class, PosmanActionArea, combo_date);
   gtk_widget_class_bind_template_callback (widget_class, item_activated_callback0);
+  gtk_widget_class_bind_template_callback (widget_class, home_activated_cb);
+  gtk_widget_class_bind_template_callback (widget_class, add_button_callback);
 
   properties[PROP_ITEMS] =
   g_param_spec_object ("items",
@@ -338,6 +396,15 @@ posman_action_area_class_init(PosmanActionAreaClass *klass)
                                          2,
                                          GTK_TYPE_ICON_VIEW,
                                          GTK_TYPE_TREE_PATH);
+  signals[HOME_ACTIVATED] = g_signal_new("home-activated",
+                                       G_OBJECT_CLASS_TYPE (object_class),
+                                       G_SIGNAL_RUN_FIRST,
+                                       0,
+                                       NULL,NULL,
+                                       NULL,
+                                       G_TYPE_NONE,
+                                       1,
+                                       GTK_TYPE_LIST_STORE);
 
 
 }

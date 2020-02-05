@@ -2,7 +2,9 @@ WITH RECURSIVE domain_family(id,parent_domain_id) AS (
 select id,parent_domain_id from domains where id is 4 UNION ALL 
 select d.id,d.parent_domain_id from domains as d,domain_family as f
 where d.id = f.parent_domain_id)
-select * from domains as d1
+select p.value as price,DATE(s.stock_date)||'('|| ifnull((s.quantity - sum(o.quantity)),s.quantity)||')' as stock_date,
+p.stock_id,pr.full_name  as prodect_name,pr.unit_in_pack,pr.inc_unit,pr.property
+,s.buy_price,ifnull((s.quantity - sum(o.quantity)),s.quantity) as rest from domains as d1
 left join domains as d2 on d2.parent_domain_id = d1.id
 inner join prices as p on p.domain_id = d1.id
 inner join product as pr on pr.id = s.prod_id and pr.id is 1
