@@ -21,9 +21,15 @@ struct _PosmanActionArea {
   gint64                cust_id;
   gint                  cust_dmn;
 
+  GtkWidget             *price_viewer;
   GtkWidget             *qt_sb;
   GtkWidget             *price_sb;
   GtkWidget             *combo_date;
+
+  /* tree view clom and rend */
+
+  GtkWidget             *qt_colm,*cell_qt;
+  GtkWidget             *price_colm,*cell_price;
 };
 
 G_DEFINE_TYPE(PosmanActionArea, posman_action_area, GTK_TYPE_STACK)
@@ -51,6 +57,10 @@ enum {
 
 static GParamSpec *properties [N_PROPS];
 static guint      signals[LAST_SIGNAL];
+
+static GtkWidget *
+get_action_area_from_view(PosmanActionArea      *self,
+                          PosmanActionAreaView  view);
 
 /* callback */
 
@@ -88,6 +98,36 @@ gtk_tree_model_get_values(GtkTreeModel  *combo_model,
   return &value_array[0];
 }
 
+gboolean
+did_we_had_this_stock(GtkTreeModel  *list_model,
+                      GValue        *value,
+                      GtkTreeIter   *iter_c)
+{
+  GValue value_check = G_VALUE_INIT;
+  if(!gtk_tree_model_get_iter_first(GTK_TREE_MODEL (list_model),iter_c))
+    return FALSE;
+  do{
+  gtk_tree_model_get_value(list_model,
+                           iter_c,
+                           1,&value_check);
+  if(!g_strcmp0 (g_value_get_string (&value_check),g_value_get_string (value)))
+      {
+        return TRUE;
+      }
+  g_value_unset (&value_check);
+  }while (gtk_tree_model_iter_next(GTK_TREE_MODEL (list_model),iter_c));
+  return FALSE;
+}
+
+void
+value_free(GValue   *value)
+{
+  for(gint i = 0;i<=6;i++)
+    {
+      g_value_unset (&value[i]);
+    }
+}
+
 void
 add_button_callback(GtkButton *button,
                     gpointer   user_data)
@@ -101,19 +141,81 @@ add_button_callback(GtkButton *button,
   if(!gtk_tree_model_get_iter_first(GTK_TREE_MODEL (combo_model),
                                     &iter))
     {
-    g_message("sorry i can't find and thing in the first row");
+      gtk_widget_set_visible (GTK_WIDGET(self->price_viewer),FALSE);
+      gtk_tree_model_get_iter_first(list_model,&iter_c);
+      gtk_tree_model_row_changed(list_model,
+                                     gtk_tree_path_new_first(),
+                                     &iter_c);
       return;
     }
+  do
+    {
   GValue *value = gtk_tree_model_get_values(combo_model,iter);
-  gtk_list_store_append(GTK_LIST_STORE (list_model),&iter_c);
-  gtk_list_store_set_valuesv(GTK_LIST_STORE (list_model),
-                             &iter_c,
-                             columns,
-                             value,
-                             gtk_tree_model_get_n_columns(combo_model));
 
+      if(gtk_adjustment_get_value (GTK_ADJUSTMENT (g_value_get_object (&value[2]))) == 0)
+        continue;
+      if(did_we_had_this_stock(list_model,
+                               &value[1],
+                               &iter_c))
+        {
+          GtkAdjustment   *adj;
+          gtk_tree_model_get(list_model,
+                             &iter_c,
+                             2,&adj,-1);
+          gtk_adjustment_set_value(adj,
+                                   gtk_adjustment_get_value (adj)
+                                   +gtk_adjustment_get_value (g_value_get_object (&value[2])));
+          gtk_tree_model_row_changed(list_model,
+                                     gtk_tree_model_get_path(list_model,&iter_c),
+                                     &iter_c);
+          continue;
+        }
+      gtk_list_store_append(GTK_LIST_STORE (list_model),&iter_c);
+      gtk_list_store_set_valuesv(GTK_LIST_STORE (list_model),
+                                 &iter_c,
+                                 columns,
+                                 value,
+                                 gtk_tree_model_get_n_columns(combo_model));
+      value_free(value);
+    }while (gtk_tree_model_iter_next(GTK_TREE_MODEL (combo_model),
+                                     &iter));
+  gtk_widget_set_visible (GTK_WIDGET(self->price_viewer),
+                          FALSE);
 }
 
+void
+treeview_row_activated_cb(GtkTreeView       *tree_view,
+                          GtkTreePath       *path,
+                          GtkTreeViewColumn *column,
+                          gpointer           user_data)
+{
+  PosmanActionArea  *self = POSMAN_ACTION_AREA (user_data);
+  GtkTreeModel      *model = gtk_tree_view_get_model (tree_view);
+  GtkTreeModel      *combo_model = gtk_combo_box_get_model(GTK_COMBO_BOX (self->combo_date));
+  GtkTreeIter       iter;
+  GtkAdjustment     *p_adj,*q_adj;
+  gtk_tree_model_get_iter(model,&iter,path);
+
+  gtk_tree_model_get(model,&iter,2,&q_adj,3,&p_adj,-1);
+  gtk_spin_button_set_adjustment (GTK_SPIN_BUTTON(self->price_sb),p_adj);
+  gtk_spin_button_set_adjustment (GTK_SPIN_BUTTON(self->qt_sb),q_adj);
+  gtk_list_store_clear (GTK_LIST_STORE(combo_model));
+  gtk_widget_set_visible (GTK_WIDGET(self->price_viewer),TRUE);
+}
+
+void
+cancel_button_cb(GtkButton *button,
+                 gpointer   user_data)
+{
+  PosmanActionArea  *self = POSMAN_ACTION_AREA (user_data);
+  gtk_list_store_clear (GTK_LIST_STORE (self->items_viewer));
+  gtk_list_store_clear (GTK_LIST_STORE (self->items));
+  gtk_widget_set_visible(self->price_viewer,FALSE);
+  gtk_stack_set_visible_child(GTK_STACK (self),
+                              get_action_area_from_view(self,
+                                                        posman_action_area_view_main));
+
+}
 /* Auxiliary */
 
 
@@ -173,7 +275,7 @@ posman_action_area_new(void)
 static void
 posman_action_area_finalize(GObject *object)
 {
-  PosmanActionArea *self = (PosmanActionArea*)object;
+  /*PosmanActionArea *self = (PosmanActionArea*)object;*/
 
   G_OBJECT_CLASS(posman_action_area_parent_class)->finalize(object);
 }
@@ -290,6 +392,7 @@ posman_action_area_set_property(GObject      *object,
     }
 }
 
+
 static void
 posman_action_area_class_init(PosmanActionAreaClass *klass)
 {
@@ -316,9 +419,17 @@ posman_action_area_class_init(PosmanActionAreaClass *klass)
   gtk_widget_class_bind_template_child (widget_class, PosmanActionArea, qt_sb);
   gtk_widget_class_bind_template_child (widget_class, PosmanActionArea, price_sb);
   gtk_widget_class_bind_template_child (widget_class, PosmanActionArea, combo_date);
+  gtk_widget_class_bind_template_child (widget_class, PosmanActionArea, qt_colm);
+  gtk_widget_class_bind_template_child (widget_class, PosmanActionArea, cell_qt);
+  gtk_widget_class_bind_template_child (widget_class, PosmanActionArea, price_colm);
+  gtk_widget_class_bind_template_child (widget_class, PosmanActionArea, cell_price);
+  gtk_widget_class_bind_template_child (widget_class, PosmanActionArea, price_viewer);
+
   gtk_widget_class_bind_template_callback (widget_class, item_activated_callback0);
   gtk_widget_class_bind_template_callback (widget_class, home_activated_cb);
   gtk_widget_class_bind_template_callback (widget_class, add_button_callback);
+  gtk_widget_class_bind_template_callback (widget_class, cancel_button_cb);
+  gtk_widget_class_bind_template_callback (widget_class, treeview_row_activated_cb);
 
   properties[PROP_ITEMS] =
   g_param_spec_object ("items",
@@ -409,10 +520,57 @@ posman_action_area_class_init(PosmanActionAreaClass *klass)
 
 }
 
+void
+cell_update_cb(GtkAdjustment *adjustment,
+               gpointer       user_data)
+{
+  GtkCellRenderer     *cell = GTK_CELL_RENDERER (user_data);
+
+  g_object_set(cell,"text",
+               g_strdup_printf ("%.2f",gtk_adjustment_get_value(adjustment)),NULL);
+}
+
+void
+gtk_tree_cell_data_fonc_price(GtkTreeViewColumn *tree_column,
+                              GtkCellRenderer *cell,
+                              GtkTreeModel *tree_model,
+                              GtkTreeIter *iter,
+                              gpointer data)
+{
+  GtkAdjustment   *adj;
+  gtk_tree_model_get (tree_model,
+                      iter, 2, &adj, -1);
+  g_object_set(cell,"text",
+               g_strdup_printf ("%.2f",gtk_adjustment_get_value(adj)),NULL);
+}
+
+void
+gtk_tree_cell_data_fonc_qt(GtkTreeViewColumn *tree_column,
+                           GtkCellRenderer *cell,
+                           GtkTreeModel *tree_model,
+                           GtkTreeIter *iter,
+                           gpointer data)
+{
+  GtkAdjustment   *adj;
+  gtk_tree_model_get (tree_model,
+                      iter, 3, &adj, -1);
+  g_object_set(cell,"text",
+               g_strdup_printf ("%.2f",gtk_adjustment_get_value(adj)),NULL);
+}
+
 static void
 posman_action_area_init(PosmanActionArea *self)
 {
   gtk_widget_init_template(GTK_WIDGET(self));
+
+  gtk_tree_view_column_set_cell_data_func(GTK_TREE_VIEW_COLUMN (self->price_colm),
+                                          GTK_CELL_RENDERER (self->cell_price),
+                                          gtk_tree_cell_data_fonc_price,
+                                          NULL,NULL);
+  gtk_tree_view_column_set_cell_data_func(GTK_TREE_VIEW_COLUMN (self->qt_colm),
+                                          GTK_CELL_RENDERER (self->cell_qt),
+                                          gtk_tree_cell_data_fonc_qt,
+                                          NULL,NULL);
 }
 
 void
@@ -525,4 +683,12 @@ GtkComboBox*
 posman_action_area_get_combo(PosmanActionArea  *self)
 {
   return  GTK_COMBO_BOX (self->combo_date);
+}
+
+void
+posman_action_area_set_visible(PosmanActionArea  *self,
+                               gboolean          visible)
+{
+  g_return_if_fail (POSMAN_IS_ACTION_AREA (self));
+  gtk_widget_set_visible(self->price_viewer,visible);
 }

@@ -57,4 +57,8 @@ posman_action_area_set_price_adj(PosmanActionArea  *self,GtkAdjustment *adj);
 GtkComboBox*
 posman_action_area_get_combo(PosmanActionArea  *self);
 
+void
+posman_action_area_set_visible(PosmanActionArea  *self,
+                               gboolean          visible);
+
 G_END_DECLS

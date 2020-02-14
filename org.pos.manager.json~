@@ -1,10 +1,10 @@
 {
-    "app-id": "org.pos.manager",
-    "runtime": "org.gnome.Platform",
-    "runtime-version": "3.32",
-    "sdk": "org.gnome.Sdk",
-    "command": "posman",
-    "finish-args": [
+    "app-id" : "org.pos.manager",
+    "runtime" : "org.gnome.Platform",
+    "runtime-version" : "3.32",
+    "sdk" : "org.gnome.Sdk",
+    "command" : "posman",
+    "finish-args" : [
         "--share=network",
         "--share=ipc",
         "--socket=fallback-x11",
@@ -14,7 +14,7 @@
         "--talk-name=ca.desrt.dconf",
         "--env=DCONF_USER_CONFIG_DIR=.config/dconf"
     ],
-    "cleanup": [
+    "cleanup" : [
         "/include",
         "/lib/pkgconfig",
         "/man",
@@ -25,17 +25,21 @@
         "*.la",
         "*.a"
     ],
-    "modules": [
+    "modules" : [
         {
-            "name": "posman",
-            "builddir": true,
-            "buildsystem": "meson",
-            "sources": [
+            "name" : "posman",
+            "builddir" : true,
+            "buildsystem" : "meson",
+            "sources" : [
                 {
-                    "type": "git",
-                    "url": "file:///home/larahack/Projects/posman"
+                    "type" : "git",
+                    "url" : "https://github.com/goiw111/posman.git"
                 }
             ]
         }
-    ]
+    ],
+    "build-options" : {
+        "env" : {
+        }
+    }
 }

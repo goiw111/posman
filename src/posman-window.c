@@ -169,8 +169,8 @@ fill_combobox_model(PosmanWindow      *self,
                                         -1,
                                         0, sqlite3_column_text(res, stock_date),
                                         1, sqlite3_column_text(res, stock_id),
-                                        2, gtk_adjustment_new (sqlite3_column_double (res, inc_unit),
-                                                               sqlite3_column_double (res, inc_unit),
+                                        2, gtk_adjustment_new (0,
+                                                               0,
                                                                sqlite3_column_double (res, rest),
                                                                sqlite3_column_double (res, inc_unit),
                                                                1,0),
@@ -184,8 +184,7 @@ fill_combobox_model(PosmanWindow      *self,
                                         -1);
     }
   gtk_combo_box_set_active (combobox, 0);
-
-
+  posman_action_area_set_visible(action,TRUE);
 
   sqlite3_finalize(res);
 }

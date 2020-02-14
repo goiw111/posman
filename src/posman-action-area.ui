@@ -161,8 +161,7 @@
               </packing>
             </child>
             <child>
-              <object class="GtkRevealer">
-                <property name="visible">True</property>
+              <object class="GtkRevealer" id="price_viewer">
                 <property name="can_focus">False</property>
                 <property name="transition_type">slide-up</property>
                 <property name="reveal_child">True</property>
@@ -240,7 +239,7 @@
                     </child>
                     <child>
                       <object class="GtkButton">
-                        <property name="label" translatable="yes">add</property>
+                        <property name="label" translatable="yes">ok</property>
                         <property name="visible">True</property>
                         <property name="can_focus">True</property>
                         <property name="receives_default">True</property>
@@ -279,6 +278,7 @@
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
                 <property name="tooltip_column">4</property>
+                <signal name="row-activated" handler="treeview_row_activated_cb" object="PosmanActionArea" swapped="no"/>
                 <child internal-child="selection">
                   <object class="GtkTreeSelection"/>
                 </child>
@@ -295,12 +295,11 @@
                   </object>
                 </child>
                 <child>
-                  <object class="GtkTreeViewColumn">
+                  <object class="GtkTreeViewColumn" id="price_colm">
                     <property name="resizable">True</property>
                     <property name="title" translatable="yes">Prixe</property>
                     <child>
-                      <object class="GtkCellRendererSpin" id="cellrenderer_prixe">
-                        <property name="editable">True</property>
+                      <object class="GtkCellRendererSpin" id="cell_price">
                       </object>
                       <attributes>
                         <attribute name="adjustment">3</attribute>
@@ -309,12 +308,11 @@
                   </object>
                 </child>
                 <child>
-                  <object class="GtkTreeViewColumn">
+                  <object class="GtkTreeViewColumn" id="qt_colm">
                     <property name="resizable">True</property>
                     <property name="title" translatable="yes">qt</property>
                     <child>
-                      <object class="GtkCellRendererSpin" id="cellrenderer_qt">
-                        <property name="editable">True</property>
+                      <object class="GtkCellRendererSpin" id="cell_qt">
                       </object>
                       <attributes>
                         <attribute name="adjustment">2</attribute>
@@ -417,6 +415,7 @@
                         <property name="visible">True</property>
                         <property name="can_focus">True</property>
                         <property name="receives_default">True</property>
+                        <signal name="clicked" handler="cancel_button_cb" object="PosmanActionArea" swapped="no"/>
                       </object>
                       <packing>
                         <property name="expand">False</property>
