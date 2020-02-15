@@ -450,4 +450,5 @@ posman_panel_list_get_panel_row_cust_by_id(PosmanPanelList  *self,
       if(posman_panel_row_cust_get_id (POSMAN_PANEL_ROW_CUST (item)) == cust_id)
         return POSMAN_PANEL_ROW_CUST (item);
     }
+  return NULL;
 }

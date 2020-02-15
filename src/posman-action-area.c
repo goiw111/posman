@@ -30,6 +30,7 @@ struct _PosmanActionArea {
 
   GtkWidget             *qt_colm,*cell_qt;
   GtkWidget             *price_colm,*cell_price;
+  GtkWidget             *qt_price_colm,*cell_qt_price;
 };
 
 G_DEFINE_TYPE(PosmanActionArea, posman_action_area, GTK_TYPE_STACK)
@@ -211,11 +212,17 @@ cancel_button_cb(GtkButton *button,
   gtk_list_store_clear (GTK_LIST_STORE (self->items_viewer));
   gtk_list_store_clear (GTK_LIST_STORE (self->items));
   gtk_widget_set_visible(self->price_viewer,FALSE);
-  gtk_stack_set_visible_child(GTK_STACK (self),
-                              get_action_area_from_view(self,
-                                                        posman_action_area_view_main));
+  posman_action_area_set_view(self,posman_action_area_view_main);
 
 }
+
+void
+treeview_columns_changed_cb(GtkTreeView *tree_view,
+                            gpointer     user_data)
+{
+  PosmanActionArea  *self = POSMAN_ACTION_AREA (user_data);
+}
+
 /* Auxiliary */
 
 
@@ -424,12 +431,15 @@ posman_action_area_class_init(PosmanActionAreaClass *klass)
   gtk_widget_class_bind_template_child (widget_class, PosmanActionArea, price_colm);
   gtk_widget_class_bind_template_child (widget_class, PosmanActionArea, cell_price);
   gtk_widget_class_bind_template_child (widget_class, PosmanActionArea, price_viewer);
+  gtk_widget_class_bind_template_child (widget_class, PosmanActionArea, qt_price_colm);
+  gtk_widget_class_bind_template_child (widget_class, PosmanActionArea, cell_qt_price);
 
   gtk_widget_class_bind_template_callback (widget_class, item_activated_callback0);
   gtk_widget_class_bind_template_callback (widget_class, home_activated_cb);
   gtk_widget_class_bind_template_callback (widget_class, add_button_callback);
   gtk_widget_class_bind_template_callback (widget_class, cancel_button_cb);
   gtk_widget_class_bind_template_callback (widget_class, treeview_row_activated_cb);
+  gtk_widget_class_bind_template_callback (widget_class, treeview_columns_changed_cb);
 
   properties[PROP_ITEMS] =
   g_param_spec_object ("items",
@@ -539,7 +549,7 @@ gtk_tree_cell_data_fonc_price(GtkTreeViewColumn *tree_column,
 {
   GtkAdjustment   *adj;
   gtk_tree_model_get (tree_model,
-                      iter, 2, &adj, -1);
+                      iter, 3, &adj, -1);
   g_object_set(cell,"text",
                g_strdup_printf ("%.2f",gtk_adjustment_get_value(adj)),NULL);
 }
@@ -553,9 +563,27 @@ gtk_tree_cell_data_fonc_qt(GtkTreeViewColumn *tree_column,
 {
   GtkAdjustment   *adj;
   gtk_tree_model_get (tree_model,
-                      iter, 3, &adj, -1);
+                      iter, 2, &adj, -1);
   g_object_set(cell,"text",
-               g_strdup_printf ("%.2f",gtk_adjustment_get_value(adj)),NULL);
+               g_strdup_printf ("%.0f",gtk_adjustment_get_value(adj)),NULL);
+}
+
+void
+gtk_tree_cell_data_fonc_qt_price(GtkTreeViewColumn *tree_column,
+                                 GtkCellRenderer *cell,
+                                 GtkTreeModel *tree_model,
+                                 GtkTreeIter *iter,
+                                 gpointer data)
+{
+  GtkAdjustment     *adj1,*adj2;
+  gdouble           total;
+  g_autofree char*  str_total;
+
+  gtk_tree_model_get (tree_model,
+                      iter, 2, &adj1,3,&adj2, -1);
+  total = gtk_adjustment_get_value(adj1) * gtk_adjustment_get_value(adj2);
+  str_total = g_strdup_printf ("%.2f",total);
+  g_object_set(cell,"text",str_total,NULL);
 }
 
 static void
@@ -570,6 +598,10 @@ posman_action_area_init(PosmanActionArea *self)
   gtk_tree_view_column_set_cell_data_func(GTK_TREE_VIEW_COLUMN (self->qt_colm),
                                           GTK_CELL_RENDERER (self->cell_qt),
                                           gtk_tree_cell_data_fonc_qt,
+                                          NULL,NULL);
+  gtk_tree_view_column_set_cell_data_func(GTK_TREE_VIEW_COLUMN (self->qt_price_colm),
+                                          GTK_CELL_RENDERER (self->cell_qt_price),
+                                          gtk_tree_cell_data_fonc_qt_price,
                                           NULL,NULL);
 }
 

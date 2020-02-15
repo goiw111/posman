@@ -11,7 +11,7 @@ G_DECLARE_FINAL_TYPE (PosmanActionArea, posman_action_area, POSMAN, ACTION_AREA,
 
 typedef enum
 {
-  posman_action_area_view_main,
+  posman_action_area_view_main = 0,
   posman_action_area_view_add_cmnd,
   posman_action_area_view_payment_validation
 }PosmanActionAreaView;

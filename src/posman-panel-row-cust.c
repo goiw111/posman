@@ -206,5 +206,7 @@ posman_panel_row_cust_get_action_area(PosmanPanelRowCust *self)
 {
   g_return_val_if_fail (POSMAN_IS_PANEL_ROW_CUST (self),NULL);
 
+  if(self->action_area)
   return (PosmanActionArea *)self->action_area;
+  return NULL;
 }

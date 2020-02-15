@@ -279,8 +279,22 @@
                 <property name="can_focus">True</property>
                 <property name="tooltip_column">4</property>
                 <signal name="row-activated" handler="treeview_row_activated_cb" object="PosmanActionArea" swapped="no"/>
+                <signal name="columns-changed" handler="treeview_columns_changed_cb" object="PosmanActionArea" swapped="no"/>
                 <child internal-child="selection">
                   <object class="GtkTreeSelection"/>
+                </child>
+                <child>
+                  <object class="GtkTreeViewColumn" id="qt_colm">
+                    <property name="resizable">True</property>
+                    <property name="title" translatable="yes">qt</property>
+                    <child>
+                      <object class="GtkCellRendererSpin" id="cell_qt">
+                      </object>
+                      <attributes>
+                        <attribute name="adjustment">2</attribute>
+                      </attributes>
+                    </child>
+                  </object>
                 </child>
                 <child>
                   <object class="GtkTreeViewColumn">
@@ -297,7 +311,7 @@
                 <child>
                   <object class="GtkTreeViewColumn" id="price_colm">
                     <property name="resizable">True</property>
-                    <property name="title" translatable="yes">Prixe</property>
+                    <property name="title" translatable="yes">price</property>
                     <child>
                       <object class="GtkCellRendererSpin" id="cell_price">
                       </object>
@@ -308,15 +322,12 @@
                   </object>
                 </child>
                 <child>
-                  <object class="GtkTreeViewColumn" id="qt_colm">
+                  <object class="GtkTreeViewColumn" id="qt_price_colm">
                     <property name="resizable">True</property>
-                    <property name="title" translatable="yes">qt</property>
+                    <property name="title" translatable="yes">qt x price</property>
                     <child>
-                      <object class="GtkCellRendererSpin" id="cell_qt">
+                      <object class="GtkCellRendererSpin" id="cell_qt_price">
                       </object>
-                      <attributes>
-                        <attribute name="adjustment">2</attribute>
-                      </attributes>
                     </child>
                   </object>
                 </child>
