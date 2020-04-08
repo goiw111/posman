@@ -2,10 +2,12 @@ posman_sources = [
   'main.c',
   'posman-window.c',
   'posman-panel-list.c',
-  'posman-action-menu-cust.c',
-  'posman-action-menu-cmnd.c',
-  'posman-panel-row-cust.c',
-  'posman-action-area.c',
+  'posman-panel-list-row.c',
+  'posman-item.c',
+  'posman-item-chooser.c',
+  'posman-add-cmnd.c',
+  'posman-item-list-row.c',
+  'posman-action-controler.c',
 ]
 
 posman_deps = [

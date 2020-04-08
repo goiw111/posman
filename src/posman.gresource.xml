@@ -3,10 +3,11 @@
   <gresource prefix="/org/pos/manager">
     <file>posman-window.ui</file>
     <file>posman-panel-list.ui</file>
-    <file>posman-action-menu-cust.ui</file>
-    <file>posman-action-menu-cmnd.ui</file>
-    <file>posman-panel-row-cust.ui</file>
-    <file>posman-action-area.ui</file>
+    <file>posman-item.ui</file>
+    <file>posman-item-chooser.ui</file>
+    <file>posman-add-cmnd.ui</file>
+    <file>posman-item-list-row.ui</file>
+    <file>posman-action-controler.ui</file>
     <file>data/box.png</file>
     <file>data/boxes.png</file>
   </gresource>
