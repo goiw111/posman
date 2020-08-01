@@ -42,7 +42,7 @@ CREATE TABLE IF NOT EXISTS suppliers (
 CREATE TABLE IF NOT EXISTS brands (
   id 	INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
   name 	varchar(15),
-  info 	varchar(30),
+  info 	varchar(30)
 );
 
 CREATE TABLE IF NOT EXISTS product (
@@ -84,10 +84,10 @@ CREATE TABLE IF NOT EXISTS stock (
 );
 
 CREATE TABLE IF NOT EXISTS prices (
-  id 			INTEGER PRIMARY KEY AUTOINCREMENfT NOT NULL,
+  id 			INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
   domain_id 		INTEGER,
   value 		REAL,
-  prod_id 		INTEGER,
+  stock_id 		INTEGER,
 
   FOREIGN KEY (domain_id)
   REFERENCES  domains(id),
@@ -141,7 +141,7 @@ CREATE TABLE IF NOT EXISTS validation (
   FOREIGN KEY (payment_id)
    REFERENCES  payment(id),
   FOREIGN KEY (order_id)
-   REFERENCES  orders(id),
+   REFERENCES  orders(id)
 );
 
 CREATE TABLE IF NOT EXISTS payment_cheque (
@@ -166,4 +166,3 @@ CREATE TABLE IF NOT EXISTS payment_cash (
   FOREIGN KEY (pay_id)
   REFERENCES  payment(id)
 );
-
